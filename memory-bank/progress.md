@@ -2,9 +2,9 @@
 
 ## Status atual
 
-**Fase:** bootstrap + Neon sincronizado (migration inicial aplicada).  
+**Fase:** 2.1 PolicyEngine **concluída**; bootstrap + Neon sync.  
 **Planejamento:** aprovado para implementação incremental.  
-**Git:** branch `main` local — **sem** commits, remotes ou push.  
+**Git:** branch `main` local (commits sob controle do usuário).  
 **Produto (chat/agent/console):** ainda não implementado.
 
 ## Feito nesta etapa
@@ -18,6 +18,7 @@
 - [x] Migration inicial `20261028005615_init` criada e aplicada no Neon
 - [x] CI: lint → typecheck → test → prisma validate → build (sem migrate automático)
 - [x] `git init -b main` (sem commit/push)
+- [x] **Fase 2.1** PolicyEngine (SLA, Jaccard, reopen, transfer, escopo) + testes unitários
 
 ## Verificações confirmadas
 
@@ -48,9 +49,9 @@
 
 ## Próximo marco recomendado
 
-1. Opcional: primeiro commit do bootstrap (sob pedido explícito).  
-2. **Fase 2** — Domínio + Ticket Service (PolicyEngine, SLA, duplicidade, ConfirmationGate) com testes unitários.  
-3. Seed mínimo depois do domínio (conforme `data-model.md` §10).
+1. **Fase 2.2** — ConfirmationGate (domínio) com testes.  
+2. **Fase 2.3** — TicketService + repositório Prisma + seed mínimo.  
+3. Só então auth/conversas (Fase 3).
 
 ## Log
 
@@ -61,3 +62,4 @@
 | 2026-10-27 | **Bootstrap** Next/Prisma/Vitest/Storybook/CI |
 | 2026-10-27 | Prep: `git init -b main`, `.env`, revalidação |
 | 2026-10-27 | Migration `20261028005615_init` aplicada no Neon (banco vazio → sync) |
+| 2026-10-27 | **Fase 2.1** PolicyEngine + 48 testes unitários (lint/typecheck OK) |
