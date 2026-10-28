@@ -236,7 +236,7 @@ Fonte: PNGs em `docs/prototype/` + PRD (*“siga o layout e o estilo, com liberd
 | Família tipográfica | **Não** (raster; nomes ilegíveis) | Serif no login (headline/Entrar) + sans no restante; escolher pares open-source por comparação visual na Fase 5 e registrar nomes usados | Técnica |
 | Hover / pressed | **Não** mostrados | Hover: primary ~8–12% mais escuro; pressed mais um passo — hipótese | Técnica |
 | Larguras exatas | Só proporções (~1024×640) | Sidebar funcionário ~200–240px; rail ~56–64px; lista console ~28%; chat flex; painel chamados ~280–320px — afinar lado a lado | Técnica |
-| Breakpoints mobile | **Não** | Desktop-first fiel; &lt;1024px empilhar/drawer **sem** mudar composição desktop | Técnica |
+| Breakpoints mobile | **Não** (PNG) | Desktop-first; &lt;1024: mobile master-detail + sheet; tablet lista+chat + drawer; `lg+` 4 faixas intactas — ver `design-system.md` Tela 4 | Técnica |
 | Tela 5 | PNG dedicada **ausente**; PRD descreve: analista assumiu, devolver ou encerrar | **Estado** do console (composer ativo; Assumir → Devolver/Encerrar) sobre a estrutura da tela 4 | Interpretação (texto PRD Anexo C) |
 | SVG logo N | **Não** no repo | Priorizar asset oficial se surgir; senão SVG aproximado + nota de divergência | Técnica |
 | Atalho ⌘J | Protótipo **exibe** o símbolo no botão Confirmar; **não** há especificação inequívoca de keybinding (SO, foco, preventDefault) | **Reproduzir o label visual** por fidelidade; **não implementar** handler de teclado no MVP | Técnica |

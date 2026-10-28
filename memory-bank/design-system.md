@@ -169,11 +169,19 @@ Transparência mínima do protótipo = chips `✓ …` acima/ao lado do nome. De
 **Estrutura obrigatória de quatro faixas:**
 
 1. **Rail de ícones** (~56–64px): logo N, ícone conversas com badge numérico, avatar analista (dot online) embaixo  
-2. **Lista Conversas**: título + “Disponível”; busca; filtros pill (`Todas` / `Para você` / `Com o agent` / `Minhas`); itens com avatar, snippet, hora, status (ex. “Transferida” em vermelho); selecionado = barra azul lateral  
-3. **Chat central**: header (avatar, nome, meta online·área·INC, badge “Aguardando atendente”); transcript (bolhas funcionário brancas à esquerda; bolhas IA azul-claras à direita com badge **IA**); evento de sistema centralizado; barra “espera atendente” + **Devolver ao agent** + **Assumir atendimento**; composer desabilitado até assumir  
+2. **Lista Conversas**: título + “Disponível”; busca; filtros pill (`Todas` / `Para você` / `Com o agent` / `Minhas`); itens com avatar, snippet, hora, status (ex. “Transferida” em vermelho); selecionado = barra azul lateral. Scroll: classe `.nexo-scroll-thin` (5px, sem setas nativas; thumb discreto) — evita barra grossa em desktops menores; largura da coluna `300 → 320(xl) → 340(2xl)`  
+3. **Chat central**: header (avatar, nome, meta online·área·INC, badge “Aguardando atendente”); transcript (bolhas funcionário brancas à esquerda; bolhas IA azul-claras à direita com badge **IA**; label “Nexo Assist” + badge **IA** acima da bolha; hora + ✓✓ dentro); evento de sistema com divisor; barra “espera atendente” + **Devolver ao agent** + **Assumir atendimento**; composer desabilitado até assumir. **Overflow:** scrollbar nativa oculta; botão circular ↓ (“Ver mensagens mais abaixo”) quando há conteúdo abaixo da viewport (útil em desktops menores) — clique rola suavemente até o fim.  
 4. **Painel Chamados**: “Chamados da {Nome}”; contagem abertos/encerrados; card “Desta conversa”; lista “Outros chamados”; CTA “Ver todos os chamados…”
 
-**Não colapsar** os três painéis de conteúdo em um único chat no desktop. Em viewport estreita: empilhar/drawer **mantendo** os mesmos componentes (dúvida de breakpoints — ver abaixo).
+**Não colapsar** os três painéis de conteúdo em um único chat no desktop (`lg+`, ≥1024px). Em viewport estreita (decisão UX):
+
+| Viewport | Layout |
+|----------|--------|
+| **&lt; md** (&lt;768) | Master-detail: lista **ou** chat; rail **inferior**; chamados = **bottom sheet** (ícone ticket no header) |
+| **md – lg** (768–1023) | Lista + chat lado a lado; rail **inferior**; chamados = **drawer** direito |
+| **lg+** | 4 faixas do protótipo (rail lateral + lista + chat + chamados inline) |
+
+Mesmos componentes (`AnalystRail`, `ConversationList`, `AnalystChatPane`, `AnalystTicketsPanel`); só muda composição/chrome.
 
 ### Perfil (`/profile`)
 
@@ -202,7 +210,8 @@ Agrupar por domínio; **não** forçar o mesmo shell em todas as histórias.
 |---------|---------------------------------------------------------------|
 | chrome | `EmployeeSidebar` (expandido/encolhido), `EmployeeShell` |
 | chat | `EmployeeChatThread`, bolhas, `TicketSelectList`, `TicketDetailCard`, `ChatQuickReplies`, `ChatComposer` (consulta/transferência — estático) |
-| tickets / analyst / profile | stubs / em construção |
+| analyst | `AnalystRail`, `ConversationList`, `AnalystChatPane`, `AnalystTicketsPanel`, `AnalystShell` |
+| tickets / profile | stubs / em construção |
 | feedback | `LoadingSkeleton` / `InlineError` / `EmptyState` — **no estilo** dos cards/bordas existentes |
 
 Cada story: default + loading + erro + vazio + disabled (quando couber), lado a lado com a PNG de referência.
@@ -260,7 +269,7 @@ Cada story: default + loading + erro + vazio + disabled (quando couber), lado a 
 2. **Hover/pressed** — não mostrados; escurecer primary ~8–12% (hipótese).
 3. **Hex muted / pills** — amostras fracas; afinar lado a lado.
 4. **Larguras px** — usar proporções (~sidebar 220px, rail 60px) e afinar.
-5. **Breakpoints** — desktop-first; &lt;1024 stack/drawer.
+5. **Breakpoints** — desktop-first; &lt;1024 stack/drawer — **resolvido** (tabela Tela 4 acima).
 6. **Nav active `#E9EAEF`** — amostra fraca.
 7. **SVG oficial do logo** — pendente no repo.
 

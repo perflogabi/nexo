@@ -84,3 +84,8 @@
 | 2026-10-28 | Login: clean-up — `BrokenLines`, `login-layout.ts`, tokens 15″ vs 2xl; lint/test/SB |
 | 2026-10-28 | Chat: `EmployeeSidebar` responsivo (ícones anexo + mark encolhido) + `EmployeeShell` |
 | 2026-10-28 | Chat thread consulta/transferência: bolhas, lista radio, card INC, quick replies, composer (estático) |
+| 2026-10-28 | Analyst: `AnalystRail` + `ConversationList` (filtros/busca/itens) no `/analyst` |
+| 2026-10-28 | Analyst: chat central (Assumir/Devolver) + painel Chamados da Ana |
+| 2026-10-28 | Analyst chat: seta ↓ “mais abaixo” (scrollbar oculta) em overflow |
+| 2026-10-28 | Analyst lista: `.nexo-scroll-thin` + largura 300/320/340 |
+| 2026-10-28 | Analyst responsivo: mobile master-detail, tablet split+drawer, desktop 4 faixas |
