@@ -39,6 +39,18 @@ export async function POST(_request: Request, { params }: Params) {
     return NextResponse.json({ error: { code: 'CONVERSATION_CLAIM_CONFLICT' } }, { status: 409 });
   }
 
+  const now = new Date();
+  const time = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  await prisma.message.create({
+    data: {
+      conversationId: id,
+      authorType: 'SYSTEM',
+      authorId: null,
+      content: `Assumido por você · ${time}`,
+      createdAt: now,
+    },
+  });
+
   const conversation = await prisma.conversation.findUnique({ where: { id } });
   return NextResponse.json({ conversation });
 }

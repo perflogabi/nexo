@@ -40,6 +40,14 @@
 
   --sidebar-width: 220px;
   --rail-width: 60px;
+
+  /*
+   * Famílias tipográficas (design-system).
+   * Carregadas via <link> no layout quando o Google Fonts responde;
+   * fallbacks locais evitam quebra se a rede falhar (sem next/font/google).
+   */
+  --font-schibsted: 'Schibsted Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-newsreader: Newsreader, Georgia, 'Times New Roman', serif;
 }
 
 @theme inline {

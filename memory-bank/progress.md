@@ -23,6 +23,7 @@
 - [x] **Fase 2.3** TicketService (store port, Prisma + in-memory, falha intermitente) + seed + Help Center leitura
 - [x] **Fase 3** Auth demo, middleware, ConversationService + limite 30
 - [x] **Fase 5** UI fiel ao protótipo: tokens, shells, login split, chat (draft/select/quick replies), perfil, console analista (rail+3 painéis); Storybook básico
+- [x] Console analista: mensagens/tickets reais + Assumir/Devolver/Encerrar (`CLOSED`); `/chat` com transcript da API + seed
 
 ## Verificações confirmadas
 
@@ -56,8 +57,7 @@
 
 ## Próximo marco recomendado
 
-1. **Fase 6 (plano revisado)** — Agent Mastra + Gemini (mocks no CI), tools + DecisionTrace no chat real.  
-2. Console analista: mensagens reais + claim já iniciados; enriquecer com tickets do owner.
+1. **Fase 6 (plano revisado)** — Agent Mastra + Gemini (mocks no CI), tools + DecisionTrace no chat real.
 
 ## Log
 
@@ -91,3 +91,6 @@
 | 2026-10-28 | Analyst responsivo: mobile master-detail, tablet split+drawer, desktop 4 faixas |
 | 2026-10-28 | Analyst tela 5: estado assumido (bolhas, composer enviar, chamados Em atendimento) |
 | 2026-10-28 | Cliente Meu perfil: `/profile` com shell + cards dados/senha (stub) |
+| 2026-10-28 | Analyst: lista/Assumir/Devolver ligados à API (transcript ainda demo) |
+| 2026-10-28 | Fontes: remove next/font/google (ETIMEDOUT); link CSS + fallbacks locais |
+| 2026-10-28 | Console + `/chat`: mensagens reais; tickets do owner; Encerrar → `CLOSED`; seed transcript `conv_ana_waiting` |

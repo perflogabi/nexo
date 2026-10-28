@@ -193,6 +193,7 @@ async function main() {
       transferSummary: 'Funcionário pediu analista após VPN 809 recorrente.',
       transferReasonCode: 'USER_REQUEST',
       assignedAnalystId: null,
+      messageCount: 4,
     },
     create: {
       id: 'conv_ana_waiting',
@@ -207,7 +208,7 @@ async function main() {
 
   await prisma.conversation.upsert({
     where: { id: 'conv_ana_agent' },
-    update: { status: 'WITH_AGENT', assignedAnalystId: null },
+    update: { status: 'WITH_AGENT', assignedAnalystId: null, messageCount: 2 },
     create: {
       id: 'conv_ana_agent',
       employeeId: ana.id,
@@ -216,11 +217,83 @@ async function main() {
     },
   });
 
+  // Transcript real para console + /chat (idempotente: troca o conjunto da conversa).
+  await prisma.message.deleteMany({ where: { conversationId: 'conv_ana_waiting' } });
+  const base = now.getTime();
+  await prisma.message.createMany({
+    data: [
+      {
+        id: 'msg_ana_w1',
+        conversationId: 'conv_ana_waiting',
+        authorType: 'EMPLOYEE',
+        authorId: ana.id,
+        content: 'Qual o status do meu chamado de VPN?',
+        createdAt: new Date(base - 25 * 60 * 1000),
+      },
+      {
+        id: 'msg_ana_w2',
+        conversationId: 'conv_ana_waiting',
+        authorType: 'AGENT',
+        authorId: null,
+        content:
+          'Você tem o INC-0001 (VPN erro 809) em aberto, com SLA estourado. Quer que eu chame um analista?',
+        createdAt: new Date(base - 24 * 60 * 1000),
+      },
+      {
+        id: 'msg_ana_w3',
+        conversationId: 'conv_ana_waiting',
+        authorType: 'EMPLOYEE',
+        authorId: ana.id,
+        content: 'Sim, quero falar com um analista. Continua com erro 809.',
+        createdAt: new Date(base - 20 * 60 * 1000),
+      },
+      {
+        id: 'msg_ana_w4',
+        conversationId: 'conv_ana_waiting',
+        authorType: 'AGENT',
+        authorId: null,
+        content: 'Encaminhei para o Suporte N2. Um analista vai falar com você em até 2 h úteis.',
+        createdAt: new Date(base - 19 * 60 * 1000),
+      },
+      {
+        id: 'msg_ana_w5',
+        conversationId: 'conv_ana_waiting',
+        authorType: 'SYSTEM',
+        authorId: null,
+        content: 'Transferida para Suporte N2',
+        createdAt: new Date(base - 19 * 60 * 1000 + 1000),
+      },
+    ],
+  });
+
+  await prisma.message.deleteMany({ where: { conversationId: 'conv_ana_agent' } });
+  await prisma.message.createMany({
+    data: [
+      {
+        id: 'msg_ana_a1',
+        conversationId: 'conv_ana_agent',
+        authorType: 'EMPLOYEE',
+        authorId: ana.id,
+        content: 'Oi, preciso de ajuda com o mouse.',
+        createdAt: new Date(base - 2 * 24 * 60 * 60 * 1000),
+      },
+      {
+        id: 'msg_ana_a2',
+        conversationId: 'conv_ana_agent',
+        authorType: 'AGENT',
+        authorId: null,
+        content: 'Posso consultar o INC-0002 (Mouse sem clique). Quer o status?',
+        createdAt: new Date(base - 2 * 24 * 60 * 60 * 1000 + 60_000),
+      },
+    ],
+  });
+
   console.log('Seed OK', {
     employees: [ana.email, bruno.email, analista.email],
     articles: articles.length,
     tickets: ['INC-0001', 'INC-0002', 'REQ-0001', 'INC-0100'],
     conversations: ['conv_ana_waiting', 'conv_ana_agent'],
+    messages: { conv_ana_waiting: '4 countable + 1 system', conv_ana_agent: 2 },
   });
 }
 

@@ -18,8 +18,25 @@ import {
 } from '@/components/ui/icons';
 import { DEMO_ANALYST_CHAT, type AnalystChatMessage } from '@/components/analyst/analyst-demo-data';
 
+export type AnalystChatEmployeeHeader = {
+  name: string;
+  initials: string;
+  metaWaiting: string;
+  metaClaimed: string;
+  firstName: string;
+};
+
 type Props = {
   claimed?: boolean;
+  /** Desabilita Assumir/Devolver/Encerrar durante request. */
+  busy?: boolean;
+  /** Transcript vivo; `[]` = live vazio. `undefined` = demo. */
+  messages?: AnalystChatMessage[];
+  /** Header vivo; `null` = live carregando (não usa demo). `undefined` = demo. */
+  employee?: AnalystChatEmployeeHeader | null;
+  waitingUntil?: string;
+  draftMessage?: string;
+  onSend?: (text: string) => void | Promise<void>;
   onClaim?: () => void;
   onReturn?: () => void;
   onClose?: () => void;
@@ -124,6 +141,12 @@ function MessageBubble({ message }: { message: AnalystChatMessage }) {
  */
 export function AnalystChatPane({
   claimed = false,
+  busy = false,
+  messages: messagesProp,
+  employee: employeeProp,
+  waitingUntil: waitingUntilProp,
+  draftMessage: draftMessageProp,
+  onSend,
   onClaim,
   onReturn,
   onClose,
@@ -132,15 +155,31 @@ export function AnalystChatPane({
   ticketsOpen = false,
   className = '',
 }: Props) {
-  const employee = DEMO_ANALYST_CHAT.employee;
-  const waitingUntil = DEMO_ANALYST_CHAT.waitingUntil;
-  const draftMessage = DEMO_ANALYST_CHAT.draftMessage;
-  const messages = claimed
-    ? (DEMO_ANALYST_CHAT.messagesClaimed ?? DEMO_ANALYST_CHAT.messagesWaiting)
-    : DEMO_ANALYST_CHAT.messagesWaiting;
+  const employee =
+    employeeProp === undefined
+      ? DEMO_ANALYST_CHAT.employee
+      : (employeeProp ?? {
+          name: '…',
+          initials: '…',
+          firstName: '…',
+          metaWaiting: '…',
+          metaClaimed: '…',
+        });
+  const waitingUntil = waitingUntilProp ?? (messagesProp ? '—' : DEMO_ANALYST_CHAT.waitingUntil);
+  const draftMessage = draftMessageProp ?? (messagesProp ? '' : DEMO_ANALYST_CHAT.draftMessage);
+  const messages =
+    messagesProp ??
+    (claimed
+      ? (DEMO_ANALYST_CHAT.messagesClaimed ?? DEMO_ANALYST_CHAT.messagesWaiting)
+      : DEMO_ANALYST_CHAT.messagesWaiting);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [hasMoreBelow, setHasMoreBelow] = useState(false);
   const [draft, setDraft] = useState<string>(draftMessage);
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    setDraft(draftMessage);
+  }, [draftMessage]);
 
   const updateMoreBelow = useCallback(() => {
     const el = scrollRef.current;
@@ -171,13 +210,26 @@ export function AnalystChatPane({
     if (!el) return;
     el.scrollTop = el.scrollHeight;
     updateMoreBelow();
-  }, [claimed, updateMoreBelow]);
+  }, [claimed, messages, updateMoreBelow]);
 
   const scrollToBottom = () => {
     const el = scrollRef.current;
     if (!el) return;
     el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   };
+
+  async function handleSend() {
+    const text = draft.trim();
+    if (!text || busy || sending) return;
+    if (!onSend) return;
+    setSending(true);
+    try {
+      await onSend(text);
+      setDraft('');
+    } finally {
+      setSending(false);
+    }
+  }
 
   return (
     <section
@@ -226,6 +278,7 @@ export function AnalystChatPane({
               variant="secondary"
               size="sm"
               className="w-auto px-3"
+              disabled={busy}
               onClick={onReturn}
             >
               <span className="inline-flex items-center gap-1.5">
@@ -235,11 +288,12 @@ export function AnalystChatPane({
             </Button>
             <button
               type="button"
+              disabled={busy}
               onClick={onClose}
               className={[
                 'font-ui inline-flex h-9 w-auto items-center justify-center gap-1.5 rounded-[var(--radius-sm)] px-3',
                 'border border-[var(--color-danger)] bg-[var(--color-danger-soft)] text-[13px] font-semibold text-[var(--color-danger)]',
-                'hover:bg-[#f3d5d9]',
+                'hover:bg-[#f3d5d9] disabled:cursor-not-allowed disabled:opacity-60',
               ].join(' ')}
             >
               <IconShieldCheck className="size-4" />
@@ -334,6 +388,7 @@ export function AnalystChatPane({
                 variant="secondary"
                 size="sm"
                 className="w-full px-3 sm:w-auto"
+                disabled={busy}
                 onClick={onReturn}
               >
                 <span className="inline-flex items-center justify-center gap-1.5">
@@ -346,6 +401,7 @@ export function AnalystChatPane({
                 size="sm"
                 icon="headphones"
                 className="w-full px-3 sm:w-auto"
+                disabled={busy}
                 onClick={onClaim}
               >
                 Assumir atendimento
@@ -360,17 +416,19 @@ export function AnalystChatPane({
               variant="secondary"
               size="sm"
               className="min-w-0 flex-1 px-2"
+              disabled={busy}
               onClick={onReturn}
             >
               Devolver
             </Button>
             <button
               type="button"
+              disabled={busy}
               onClick={onClose}
               className={[
                 'font-ui inline-flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] px-2',
                 'border border-[var(--color-danger)] bg-[var(--color-danger-soft)] text-[13px] font-semibold text-[var(--color-danger)]',
-                'hover:bg-[#f3d5d9]',
+                'hover:bg-[#f3d5d9] disabled:cursor-not-allowed disabled:opacity-60',
               ].join(' ')}
             >
               <IconShieldCheck className="size-3.5" />
@@ -387,6 +445,12 @@ export function AnalystChatPane({
                   type="text"
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      void handleSend();
+                    }
+                  }}
                   placeholder="Escreva uma mensagem..."
                   aria-label="Mensagem do analista"
                   className="min-w-0 flex-1 bg-transparent text-left text-[13.5px] text-[var(--color-text)] outline-none placeholder:text-[var(--color-text-muted)]"
@@ -395,7 +459,8 @@ export function AnalystChatPane({
               <button
                 type="button"
                 aria-label="Enviar mensagem"
-                disabled={!draft.trim()}
+                disabled={!draft.trim() || busy || sending}
+                onClick={() => void handleSend()}
                 className={[
                   'flex size-11 shrink-0 items-center justify-center rounded-full',
                   'bg-[var(--color-primary)] text-white shadow-[0_1px_3px_rgba(0,98,196,0.35)]',
