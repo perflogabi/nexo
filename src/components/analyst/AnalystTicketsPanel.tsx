@@ -1,4 +1,10 @@
-import { IconChevronRight, IconClose, IconExternalLink, IconTransfer } from '@/components/ui/icons';
+import {
+  IconChevronRight,
+  IconClose,
+  IconExternalLink,
+  IconHeadphones,
+  IconTransfer,
+} from '@/components/ui/icons';
 import {
   DEMO_ANALYST_TICKETS,
   type AnalystTicketTone,
@@ -11,7 +17,16 @@ const TONE_DOT: Record<AnalystTicketTone, string> = {
   resolved: 'bg-[var(--color-text-muted)]',
 };
 
+const STATUS_TEXT: Record<AnalystTicketTone, string> = {
+  waiting: 'text-[var(--color-warning-text)]',
+  progress: 'text-[var(--color-primary)]',
+  approved: 'text-[var(--color-success)]',
+  resolved: 'text-[var(--color-text-muted)]',
+};
+
 type Props = {
+  /** true = card “Em atendimento” / Assumido (tela 5). */
+  claimed?: boolean;
   className?: string;
   onClose?: () => void;
 };
@@ -20,8 +35,10 @@ type Props = {
  * Painel Chamados da {Nome}.
  * Desktop: coluna inline. Mobile/tablet: sheet/drawer via className do console.
  */
-export function AnalystTicketsPanel({ className = '', onClose }: Props) {
+export function AnalystTicketsPanel({ claimed = false, className = '', onClose }: Props) {
   const data = DEMO_ANALYST_TICKETS;
+  const current = claimed ? data.currentClaimed : data.currentWaiting;
+  const EventIcon = current.eventIcon === 'claim' ? IconHeadphones : IconTransfer;
   const layoutClass = className || 'w-[300px] border-l border-[var(--color-border)] xl:w-[320px]';
 
   return (
@@ -31,7 +48,6 @@ export function AnalystTicketsPanel({ className = '', onClose }: Props) {
         .join(' ')}
       aria-label={`Chamados da ${data.firstName}`}
     >
-      {/* handle visual — só faz sentido no bottom sheet (mobile) */}
       <div className="flex justify-center pt-2 md:hidden" aria-hidden>
         <span className="h-1 w-10 rounded-full bg-[var(--color-border-strong)]" />
       </div>
@@ -60,21 +76,29 @@ export function AnalystTicketsPanel({ className = '', onClose }: Props) {
         <article className="mt-2 rounded-[12px] border border-[var(--color-border)] bg-[var(--color-bg-subtle)] p-3">
           <div className="flex items-start justify-between gap-2">
             <span className="text-[12px] font-medium text-[var(--color-text-muted)]">
-              {data.current.number}
+              {current.number}
             </span>
-            <span className="inline-flex items-center gap-1.5 text-[11.5px] font-medium text-[var(--color-warning-text)]">
-              <span className="size-1.5 rounded-full bg-[var(--color-warning)]" aria-hidden />
-              {data.current.statusLabel}
+            <span
+              className={[
+                'inline-flex items-center gap-1.5 text-[11.5px] font-medium',
+                STATUS_TEXT[current.statusTone],
+              ].join(' ')}
+            >
+              <span
+                className={['size-1.5 rounded-full', TONE_DOT[current.statusTone]].join(' ')}
+                aria-hidden
+              />
+              {current.statusLabel}
             </span>
           </div>
           <h3 className="mt-2 text-[13.5px] leading-snug font-semibold text-[var(--color-text)]">
-            {data.current.title}
+            {current.title}
           </h3>
-          <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">{data.current.meta}</p>
+          <p className="mt-1 text-[12px] text-[var(--color-text-muted)]">{current.meta}</p>
           <div className="mt-3 flex items-center gap-1.5 border-t border-[var(--color-border)] pt-2.5 text-[11.5px] text-[var(--color-text-muted)]">
-            <IconTransfer className="size-3.5 shrink-0" />
-            <span className="min-w-0 flex-1 truncate">{data.current.eventLabel}</span>
-            <span className="shrink-0">{data.current.eventTime}</span>
+            <EventIcon className="size-3.5 shrink-0" />
+            <span className="min-w-0 flex-1 truncate">{current.eventLabel}</span>
+            <span className="shrink-0">{current.eventTime}</span>
           </div>
         </article>
 

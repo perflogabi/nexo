@@ -37,6 +37,17 @@ describe('AnalystChatPane', () => {
     expect(onOpenTickets).toHaveBeenCalled();
   });
 
+  it('no estado assumido mostra bolhas do analista, composer e Encerrar', () => {
+    render(<AnalystChatPane claimed />);
+    expect(screen.getByText('Rafael Lima')).toBeInTheDocument();
+    expect(screen.getByText('Suporte N2')).toBeInTheDocument();
+    expect(screen.getByText(/Rafael Lima assumiu/)).toBeInTheDocument();
+    expect(screen.getByText(/Posso sim, está ligado/)).toBeInTheDocument();
+    expect(screen.getByDisplayValue(/Ótimo! Vou iniciar o acesso remoto/)).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Enviar mensagem' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Encerrar atendimento' })).toBeInTheDocument();
+  });
+
   it('mostra seta para baixo quando há mensagens fora da viewport e rola ao clicar', async () => {
     const user = userEvent.setup({ delay: null });
     const scrollTo = vi.fn();

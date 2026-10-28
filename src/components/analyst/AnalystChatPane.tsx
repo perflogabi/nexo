@@ -8,8 +8,11 @@ import {
   IconChevronLeft,
   IconDoubleCheck,
   IconHand,
+  IconHeadphones,
   IconMoreVertical,
+  IconPaperPlane,
   IconSearch,
+  IconShieldCheck,
   IconTicket,
   IconTransfer,
 } from '@/components/ui/icons';
@@ -19,6 +22,7 @@ type Props = {
   claimed?: boolean;
   onClaim?: () => void;
   onReturn?: () => void;
+  onClose?: () => void;
   /** Voltar à lista — só exibido em &lt; md (master-detail). */
   onBack?: () => void;
   onOpenTickets?: () => void;
@@ -31,11 +35,12 @@ const BOTTOM_THRESHOLD_PX = 28;
 
 function MessageBubble({ message }: { message: AnalystChatMessage }) {
   if (message.kind === 'system') {
+    const SystemIcon = message.icon === 'claim' ? IconHeadphones : IconTransfer;
     return (
       <div className="flex items-center gap-3 py-2" role="status">
         <span className="h-px flex-1 bg-[var(--color-border)]" aria-hidden />
         <p className="font-ui inline-flex shrink-0 items-center gap-1.5 text-[12px] text-[var(--color-text-muted)]">
-          <IconTransfer className="size-3.5" />
+          <SystemIcon className="size-3.5" />
           {message.text}
         </p>
         <span className="h-px flex-1 bg-[var(--color-border)]" aria-hidden />
@@ -56,6 +61,33 @@ function MessageBubble({ message }: { message: AnalystChatMessage }) {
           >
             {message.time}
           </time>
+        </div>
+      </div>
+    );
+  }
+
+  if (message.kind === 'analyst') {
+    return (
+      <div className="ml-auto flex w-fit max-w-[min(100%,78%)] flex-col items-end gap-1">
+        <div className="flex items-center gap-1.5 pr-0.5">
+          <span className="text-[12.5px] font-semibold text-[var(--color-text)]">
+            {message.author}
+          </span>
+          <span className="rounded-[3px] bg-[var(--color-analyst-badge)] px-1.5 py-px text-[9px] font-bold tracking-wide text-white">
+            {message.team}
+          </span>
+        </div>
+        <div className="w-fit max-w-full rounded-[18px] rounded-br-[6px] bg-[var(--color-bg-analyst-bubble)] px-3.5 py-2.5">
+          <p className="text-[13.5px] leading-snug text-[var(--color-text)]">{message.text}</p>
+          <div className="mt-1.5 flex items-center justify-end gap-1">
+            <time
+              className="text-[11px] leading-none text-[var(--color-text-muted)]"
+              dateTime={message.time}
+            >
+              {message.time}
+            </time>
+            <IconDoubleCheck className="size-3.5 text-[var(--color-brand-blue)]" />
+          </div>
         </div>
       </div>
     );
@@ -86,21 +118,29 @@ function MessageBubble({ message }: { message: AnalystChatMessage }) {
 }
 
 /**
- * Coluna central do console — header, transcript, barra Assumir, composer.
- * Em viewports menores: voltar, sheet de chamados, claim empilhado; overflow com seta ↓.
+ * Coluna central do console.
+ * Aguardando: badge + barra Assumir + composer locked.
+ * Assumido: Devolver/Encerrar no header, bolhas do analista, composer + enviar.
  */
 export function AnalystChatPane({
   claimed = false,
   onClaim,
   onReturn,
+  onClose,
   onBack,
   onOpenTickets,
   ticketsOpen = false,
   className = '',
 }: Props) {
-  const { employee, waitingUntil, messages } = DEMO_ANALYST_CHAT;
+  const employee = DEMO_ANALYST_CHAT.employee;
+  const waitingUntil = DEMO_ANALYST_CHAT.waitingUntil;
+  const draftMessage = DEMO_ANALYST_CHAT.draftMessage;
+  const messages = claimed
+    ? (DEMO_ANALYST_CHAT.messagesClaimed ?? DEMO_ANALYST_CHAT.messagesWaiting)
+    : DEMO_ANALYST_CHAT.messagesWaiting;
   const scrollRef = useRef<HTMLDivElement>(null);
   const [hasMoreBelow, setHasMoreBelow] = useState(false);
+  const [draft, setDraft] = useState(draftMessage);
 
   const updateMoreBelow = useCallback(() => {
     const el = scrollRef.current;
@@ -124,6 +164,14 @@ export function AnalystChatPane({
       ro?.disconnect();
     };
   }, [updateMoreBelow, messages]);
+
+  useEffect(() => {
+    if (!claimed) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+    updateMoreBelow();
+  }, [claimed, updateMoreBelow]);
 
   const scrollToBottom = () => {
     const el = scrollRef.current;
@@ -160,7 +208,9 @@ export function AnalystChatPane({
           <p className="truncate text-[14px] font-semibold text-[var(--color-text)]">
             {employee.name}
           </p>
-          <p className="truncate text-[12px] text-[var(--color-text-muted)]">{employee.meta}</p>
+          <p className="truncate text-[12px] text-[var(--color-text-muted)]">
+            {claimed ? employee.metaClaimed : employee.metaWaiting}
+          </p>
         </div>
 
         {!claimed ? (
@@ -169,7 +219,34 @@ export function AnalystChatPane({
             <span className="hidden lg:inline">Aguardando atendente</span>
             <span className="lg:hidden">Aguardando</span>
           </span>
-        ) : null}
+        ) : (
+          <div className="hidden shrink-0 items-center gap-2 sm:flex">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="w-auto px-3"
+              onClick={onReturn}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <IconBot className="size-3.5" />
+                Devolver ao agent
+              </span>
+            </Button>
+            <button
+              type="button"
+              onClick={onClose}
+              className={[
+                'font-ui inline-flex h-9 w-auto items-center justify-center gap-1.5 rounded-[var(--radius-sm)] px-3',
+                'border border-[var(--color-danger)] bg-[var(--color-danger-soft)] text-[13px] font-semibold text-[var(--color-danger)]',
+                'hover:bg-[#f3d5d9]',
+              ].join(' ')}
+            >
+              <IconShieldCheck className="size-4" />
+              Encerrar atendimento
+            </button>
+          </div>
+        )}
 
         {onOpenTickets && !ticketsOpen ? (
           <button
@@ -182,13 +259,15 @@ export function AnalystChatPane({
           </button>
         ) : null}
 
-        <button
-          type="button"
-          className="hidden rounded-md p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-bg-subtle)] sm:inline-flex"
-          aria-label="Buscar na conversa"
-        >
-          <IconSearch className="size-4" />
-        </button>
+        {!claimed ? (
+          <button
+            type="button"
+            className="hidden rounded-md p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-bg-subtle)] sm:inline-flex"
+            aria-label="Buscar na conversa"
+          >
+            <IconSearch className="size-4" />
+          </button>
+        ) : null}
         <button
           type="button"
           className="rounded-md p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-bg-subtle)]"
@@ -211,7 +290,7 @@ export function AnalystChatPane({
               Hoje
             </span>
           </div>
-          {messages.map((message) => (
+          {(messages ?? []).map((message) => (
             <MessageBubble key={message.id} message={message} />
           ))}
         </div>
@@ -273,27 +352,72 @@ export function AnalystChatPane({
               </Button>
             </div>
           </div>
-        ) : null}
+        ) : (
+          /* ações compactas no mobile (header esconde Devolver/Encerrar em &lt; sm) */
+          <div className="flex gap-2 px-3 pt-3 sm:hidden">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              className="min-w-0 flex-1 px-2"
+              onClick={onReturn}
+            >
+              Devolver
+            </Button>
+            <button
+              type="button"
+              onClick={onClose}
+              className={[
+                'font-ui inline-flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-sm)] px-2',
+                'border border-[var(--color-danger)] bg-[var(--color-danger-soft)] text-[13px] font-semibold text-[var(--color-danger)]',
+                'hover:bg-[#f3d5d9]',
+              ].join(' ')}
+            >
+              <IconShieldCheck className="size-3.5" />
+              Encerrar
+            </button>
+          </div>
+        )}
 
         <div className={['px-3 pb-3 sm:px-4', claimed ? 'pt-3' : 'pt-0.5'].join(' ')}>
-          <div
-            className={[
-              'flex h-11 items-center rounded-[var(--radius-md)] px-4',
-              claimed
-                ? 'border border-[var(--color-border)] bg-white'
-                : 'bg-[var(--color-bg-subtle)]',
-            ].join(' ')}
-          >
-            <input
-              type="text"
-              disabled={!claimed}
-              placeholder={
-                claimed ? 'Escreva uma mensagem...' : 'Assuma o atendimento para responder'
-              }
-              aria-label="Mensagem do analista"
-              className="min-w-0 flex-1 bg-transparent text-left text-[13.5px] text-[var(--color-text)] outline-none placeholder:text-[var(--color-text-muted)] disabled:cursor-not-allowed"
-            />
-          </div>
+          {claimed ? (
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-11 min-w-0 flex-1 items-center rounded-[var(--radius-pill)] bg-[var(--color-bg-subtle)] px-4">
+                <input
+                  type="text"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  placeholder="Escreva uma mensagem..."
+                  aria-label="Mensagem do analista"
+                  className="min-w-0 flex-1 bg-transparent text-left text-[13.5px] text-[var(--color-text)] outline-none placeholder:text-[var(--color-text-muted)]"
+                />
+              </div>
+              <button
+                type="button"
+                aria-label="Enviar mensagem"
+                disabled={!draft.trim()}
+                className={[
+                  'flex size-11 shrink-0 items-center justify-center rounded-full',
+                  'bg-[var(--color-primary)] text-white shadow-[0_1px_3px_rgba(0,98,196,0.35)]',
+                  'transition-colors hover:bg-[var(--color-primary-hover)]',
+                  'disabled:cursor-not-allowed disabled:opacity-50',
+                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]',
+                ].join(' ')}
+              >
+                <IconPaperPlane className="size-5" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex h-11 items-center rounded-[var(--radius-md)] bg-[var(--color-bg-subtle)] px-4">
+              <input
+                type="text"
+                disabled
+                placeholder="Assuma o atendimento para responder"
+                aria-label="Mensagem do analista"
+                className="min-w-0 flex-1 bg-transparent text-left text-[13.5px] text-[var(--color-text)] outline-none placeholder:text-[var(--color-text-muted)] disabled:cursor-not-allowed"
+              />
+            </div>
+          )}
         </div>
       </footer>
     </section>

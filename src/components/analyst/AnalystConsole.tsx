@@ -47,6 +47,7 @@ export function AnalystConsole({ analystInitials = 'RL' }: Props) {
           claimed={claimed}
           onClaim={() => setClaimed(true)}
           onReturn={() => setClaimed(false)}
+          onClose={() => setClaimed(false)}
           onBack={() => setMobilePane('list')}
           onOpenTickets={() => setTicketsOpen(true)}
           ticketsOpen={ticketsOpen}
@@ -61,6 +62,7 @@ export function AnalystConsole({ analystInitials = 'RL' }: Props) {
               onClick={() => setTicketsOpen(false)}
             />
             <AnalystTicketsPanel
+              claimed={claimed}
               onClose={() => setTicketsOpen(false)}
               className={[
                 /* mobile: bottom sheet */

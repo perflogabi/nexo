@@ -28,6 +28,7 @@ export const Assumido: Story = {
         claimed={claimed}
         onClaim={() => setClaimed(true)}
         onReturn={() => setClaimed(false)}
+        onClose={() => setClaimed(false)}
       />
     );
   },

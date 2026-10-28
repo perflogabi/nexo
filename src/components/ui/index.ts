@@ -10,6 +10,8 @@ export {
   IconArrowRight,
   IconHeadphones,
   IconSend,
+  IconPaperPlane,
+  IconShieldCheck,
   IconMail,
   IconLock,
   IconEye,

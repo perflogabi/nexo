@@ -13,12 +13,24 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Desktop — 4 faixas do protótipo. */
+/** Desktop — 4 faixas (aguardando atendente). */
 export const QuatroFaixas: Story = {
   render: () => (
     <AnalystShell>
       <AnalystChatPane />
       <AnalystTicketsPanel />
+    </AnalystShell>
+  ),
+};
+
+/** Desktop — atendimento assumido (tela 5). */
+export const AtendimentoAssumido: Story = {
+  render: () => (
+    <AnalystShell>
+      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
+        <AnalystChatPane claimed />
+        <AnalystTicketsPanel claimed />
+      </div>
     </AnalystShell>
   ),
 };

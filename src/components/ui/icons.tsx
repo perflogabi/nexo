@@ -63,7 +63,7 @@ export function IconHeadphones(props: IconProps) {
   );
 }
 
-/** Enviar / seta geométrica à direita (anexo Icon 2). */
+/** Enviar / seta geométrica à direita (anexo Icon 2 — chat funcionário). */
 export function IconSend(props: IconProps) {
   return (
     <IconBase {...props}>
@@ -74,6 +74,46 @@ export function IconSend(props: IconProps) {
         strokeLinejoin="round"
       />
       <path d="M3 8h10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </IconBase>
+  );
+}
+
+/**
+ * Avião de papel (Send) — botão circular do console assumido.
+ * Geometria centrada no viewBox (ponta à direita + dobra), como no protótipo.
+ */
+export function IconPaperPlane(props: IconProps) {
+  return (
+    <IconBase viewBox="0 0 16 16" {...props}>
+      <path
+        d="M2.4 3.1 13.6 8 2.4 12.9V9.55L9.7 8 2.4 6.45V3.1Z"
+        stroke="currentColor"
+        strokeWidth="1.35"
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </IconBase>
+  );
+}
+
+/** Escudo + check — Encerrar atendimento (protótipo). */
+export function IconShieldCheck(props: IconProps) {
+  return (
+    <IconBase viewBox="0 0 24 24" width={16} height={16} {...props}>
+      <path
+        d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="m9 12 2 2 4-4"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </IconBase>
   );
 }

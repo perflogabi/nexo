@@ -45,6 +45,9 @@ Artefatos analisados em ~1024×640 (desktop). Cores abaixo foram **amostradas** 
   --color-bg-subtle: #F6F7F9;       /* rail / áreas secundárias console */
   --color-bg-chat-console: #EEF2F5; /* fundo da coluna central do atendente */
   --color-bg-ia-bubble: #E6EEF9;    /* bolha IA no console do atendente */
+  --color-bg-analyst-bubble: #E4F0E8; /* bolha do analista humano */
+  --color-analyst-badge: #2F7D4A;   /* badge “Suporte N2” */
+  --color-danger-soft: #F8E8EA;     /* Encerrar atendimento */
   --color-bg-nav-active: #E9EAEF;   /* item de menu ativo (amostra fraca — validar) */
   --color-bg-avatar: #E8F1FB;       /* hipótese: avatar AS azul-claro — validar */
 
@@ -261,7 +264,7 @@ Cada story: default + loading + erro + vazio + disabled (quando couber), lado a 
 | Console | Manter **três painéis de conteúdo** + rail de ícones; não colapsar no desktop |
 | Atalho ⌘J | Protótipo **exibe** o símbolo no Confirmar; PRD não especifica keybinding. **MVP: label visual apenas; sem handler de teclado** (`requirements-resolution.md` §2.7) |
 | Logo | Priorizar asset oficial; se ausente, SVG aproximado + divergência registrada |
-| Tela 5 | Sem PNG dedicada; PRD Anexo C descreve o estado — composer ativo + Devolver/Encerrar na mesma estrutura do console |
+| Tela 5 | Atendimento assumido = **estado** do console (`claimed`): bolhas verdes do analista + badge equipe; sistema “assumiu”; header Devolver/Encerrar; composer pill + enviar circular; chamados “Em atendimento” / Assumido por… |
 
 ## Hipóteses visuais ainda abertas (não são requisitos PRD)
 
