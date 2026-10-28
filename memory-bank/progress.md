@@ -90,3 +90,4 @@
 | 2026-10-28 | Analyst lista: `.nexo-scroll-thin` + largura 300/320/340 |
 | 2026-10-28 | Analyst responsivo: mobile master-detail, tablet split+drawer, desktop 4 faixas |
 | 2026-10-28 | Analyst tela 5: estado assumido (bolhas, composer enviar, chamados Em atendimento) |
+| 2026-10-28 | Cliente Meu perfil: `/profile` com shell + cards dados/senha (stub) |

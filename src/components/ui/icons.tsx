@@ -128,6 +128,43 @@ export function IconMail(props: IconProps) {
   );
 }
 
+/** Chave — card Senha no perfil. */
+export function IconKey(props: IconProps) {
+  return (
+    <IconBase viewBox="0 0 16 16" {...props}>
+      <circle cx="5.75" cy="5.75" r="2.6" stroke="currentColor" strokeWidth="1.4" />
+      <path
+        d="M7.7 7.7 13.4 13.4M11.35 11.35h2.2M10.4 12.3h1.7"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </IconBase>
+  );
+}
+
+/** Setas circulares — Redefinir senha. */
+export function IconRefresh(props: IconProps) {
+  return (
+    <IconBase viewBox="0 0 16 16" {...props}>
+      <path
+        d="M13.2 8a5.2 5.2 0 1 1-1.3-3.45"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M13.2 3.2V6.5H9.9"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </IconBase>
+  );
+}
+
 /** Cadeado (Input senha). */
 export function IconLock(props: IconProps) {
   return (

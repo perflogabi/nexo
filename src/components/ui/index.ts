@@ -14,6 +14,8 @@ export {
   IconShieldCheck,
   IconMail,
   IconLock,
+  IconKey,
+  IconRefresh,
   IconEye,
   IconNavChat,
   IconNavProfile,

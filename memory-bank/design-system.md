@@ -214,7 +214,8 @@ Agrupar por domínio; **não** forçar o mesmo shell em todas as histórias.
 | chrome | `EmployeeSidebar` (expandido/encolhido), `EmployeeShell` |
 | chat | `EmployeeChatThread`, bolhas, `TicketSelectList`, `TicketDetailCard`, `ChatQuickReplies`, `ChatComposer` (consulta/transferência — estático) |
 | analyst | `AnalystRail`, `ConversationList`, `AnalystChatPane`, `AnalystTicketsPanel`, `AnalystShell` |
-| tickets / profile | stubs / em construção |
+| profile | `EmployeeProfilePanel` (dados + senha stub) |
+| tickets | stubs / em construção |
 | feedback | `LoadingSkeleton` / `InlineError` / `EmptyState` — **no estilo** dos cards/bordas existentes |
 
 Cada story: default + loading + erro + vazio + disabled (quando couber), lado a lado com a PNG de referência.

@@ -140,7 +140,7 @@ export function AnalystChatPane({
     : DEMO_ANALYST_CHAT.messagesWaiting;
   const scrollRef = useRef<HTMLDivElement>(null);
   const [hasMoreBelow, setHasMoreBelow] = useState(false);
-  const [draft, setDraft] = useState(draftMessage);
+  const [draft, setDraft] = useState<string>(draftMessage);
 
   const updateMoreBelow = useCallback(() => {
     const el = scrollRef.current;
