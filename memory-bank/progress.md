@@ -2,7 +2,7 @@
 
 ## Status atual
 
-**Fase:** 2.3 TicketService + seed **concluída**; ConfirmationGate + PolicyEngine.  
+**Fase:** 3 Auth + conversas **concluída** (stubs UI); domínio/serviço até 2.3.  
 **Planejamento:** aprovado para implementação incremental.  
 **Git:** branch `main` local (commits sob controle do usuário).  
 **Produto (chat/agent/console):** ainda não implementado.
@@ -21,12 +21,13 @@
 - [x] **Fase 2.1** PolicyEngine (SLA, Jaccard, reopen, transfer, escopo) + testes unitários
 - [x] **Fase 2.2** ConfirmationGate (domínio puro, TTL H)
 - [x] **Fase 2.3** TicketService (store port, Prisma + in-memory, falha intermitente) + seed + Help Center leitura
+- [x] **Fase 3** Auth demo (qualquer senha), middleware de roles, ConversationService + limite 30, rotas stub `/login` `/chat` `/profile` `/analyst`
 
 ## Verificações confirmadas
 
 | Comando / check | Resultado |
 |-----------------|-----------|
-| `npm run lint` / `typecheck` / `test` | OK (Fase 2.3: 75 testes) |
+| `npm run lint` / `typecheck` / `test` / `build` | OK (Fase 3: 85 testes) |
 | `npm run db:seed` | OK (Neon; employees/artigos/tickets demo) |
 | Conexão pooled + direct | OK |
 | `prisma migrate dev --name init --skip-seed` | OK — DB in sync |
@@ -52,8 +53,8 @@
 
 ## Próximo marco recomendado
 
-1. **Fase 3** — Auth demo + conversas (login, middleware de role, limite 30).  
-2. Depois UI / agent conforme plano.
+1. **Fase 4** — Agent Mastra + Gemini (mocks no CI) + DecisionTrace no fluxo.  
+2. **Fase 5** — UI funcionário com fidelidade ao protótipo.
 
 ## Log
 
@@ -67,3 +68,4 @@
 | 2026-10-27 | **Fase 2.1** PolicyEngine + 48 testes unitários (lint/typecheck OK) |
 | 2026-10-27 | **Fase 2.2** ConfirmationGate domínio + testes (TTL H explícito) |
 | 2026-10-27 | **Fase 2.3** TicketService + seed Neon + 75 testes unitários |
+| 2026-10-27 | **Fase 3** Auth/sessão/middleware + ConversationService + stubs UI (85 testes) |

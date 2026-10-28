@@ -55,3 +55,50 @@ export class TicketServiceUnavailableError extends Error {
     this.name = 'TicketServiceUnavailableError';
   }
 }
+
+export class MessageLimitExceededError extends Error {
+  readonly code = 'MESSAGE_LIMIT_EXCEEDED' as const;
+
+  constructor(message = 'Conversation message limit reached (30)') {
+    super(message);
+    this.name = 'MessageLimitExceededError';
+  }
+}
+
+export class AuthError extends Error {
+  readonly code = 'AUTH_ERROR' as const;
+  readonly reason: 'INVALID_CREDENTIALS' | 'UNAUTHENTICATED' | 'FORBIDDEN';
+
+  constructor(reason: AuthError['reason'], message?: string) {
+    super(message ?? reason);
+    this.name = 'AuthError';
+    this.reason = reason;
+  }
+}
+
+export class ConversationAccessDeniedError extends Error {
+  readonly code = 'CONVERSATION_ACCESS_DENIED' as const;
+
+  constructor(message = 'Conversation access denied') {
+    super(message);
+    this.name = 'ConversationAccessDeniedError';
+  }
+}
+
+export class ConversationNotFoundError extends Error {
+  readonly code = 'CONVERSATION_NOT_FOUND' as const;
+
+  constructor(message = 'Conversation not found') {
+    super(message);
+    this.name = 'ConversationNotFoundError';
+  }
+}
+
+export class AgentPausedError extends Error {
+  readonly code = 'AGENT_PAUSED' as const;
+
+  constructor(message = 'Agent is paused for this conversation') {
+    super(message);
+    this.name = 'AgentPausedError';
+  }
+}

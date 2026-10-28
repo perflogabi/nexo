@@ -34,10 +34,11 @@ Usar **npm** (`package-lock.json`).
 
 ## Fase 3 — Auth e conversas
 
-1. Login demo (qualquer senha); role validado no servidor
-2. Middleware: EMPLOYEE → `/chat`|`/profile`; ANALYST → `/analyst`
-3. Conversation / Message / DecisionTrace
-4. Limite **30 msgs/conversa** no servidor
+1. [x] Login demo (qualquer senha); role validado no servidor
+2. [x] Middleware: EMPLOYEE → `/chat`|`/profile`; ANALYST → `/analyst`
+3. [x] Conversation / Message / DecisionTrace (serviço + API; agent LLM = Fase 4)
+4. [x] Limite **30 msgs/conversa** no servidor
+5. [x] Stubs de página (fidelidade visual = Fase 5)
 
 ## Fase 4 — Agent Mastra
 

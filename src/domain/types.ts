@@ -20,6 +20,10 @@ export type TicketStatus =
 
 export type PendingOperation = 'CREATE' | 'UPDATE' | 'REOPEN';
 
+export type AuthorType = 'EMPLOYEE' | 'AGENT' | 'ANALYST' | 'SYSTEM';
+
+export type PresentedAssurance = 'UNKNOWN' | 'LOW' | 'MEDIUM' | 'HIGH';
+
 /** Domínios usados em isInTiScope — fora do enum Category do ticket. */
 export type RequestDomain = 'TI' | 'RH' | 'FINANCEIRO' | 'FACILITIES' | 'OTHER_NON_TI';
 

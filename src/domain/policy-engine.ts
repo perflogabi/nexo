@@ -22,3 +22,4 @@ export * from './transfer';
 export * from './authorization-scope';
 export * from './ti-scope';
 export * from './confirmation-gate';
+export * from './message-limit';

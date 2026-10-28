@@ -60,3 +60,7 @@ jobs:
         run: npm run build
         env:
           CI: true
+          AUTH_SECRET: ci-build-auth-secret-not-real
+          # Placeholders — build não conecta ao Neon
+          DATABASE_URL: postgresql://user:pass@ep-example-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require
+          DIRECT_URL: postgresql://user:pass@ep-example.us-east-1.aws.neon.tech/neondb?sslmode=require
