@@ -24,3 +24,8 @@ export const BrandOnNavy: Story = {
 export const AppMarkOnly: Story = {
   args: { variant: 'app', showWordmark: false, height: 28 },
 };
+
+/** Mark do sidebar encolhido (anexo Logo). */
+export const CollapsedMark: Story = {
+  args: { variant: 'mark', height: 28 },
+};

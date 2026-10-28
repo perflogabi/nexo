@@ -52,6 +52,10 @@ export function LoginForm({ defaultEmail = '', onSubmit }: Props) {
         <Typography font="schibsted" size={15.5} className="mt-2.5 text-[var(--color-text-muted)]">
           Use seu e-mail corporativo e a senha da rede Nexo.
         </Typography>
+        <Typography font="schibsted" size={12.5} className="mt-2 text-[var(--color-text-muted)]">
+          Demo: <span className="text-[var(--color-text)]">ana.souza@nexo.com.br</span> · qualquer
+          senha
+        </Typography>
       </div>
 
       <Input
@@ -106,7 +110,7 @@ export function LoginForm({ defaultEmail = '', onSubmit }: Props) {
         </Typography>
       ) : null}
 
-      <Button type="submit" size="md" iconEnd="arrow" disabled={loading} className="mt-0.5">
+      <Button type="submit" size="md" iconEnd="arrow" disabled={loading} className="mt-0.5 w-full">
         {loading ? 'Entrando…' : 'Entrar'}
       </Button>
 

@@ -200,7 +200,9 @@ Agrupar por domínio; **não** forçar o mesmo shell em todas as histórias.
 
 | Domínio | Componentes (próximas telas — layout já especificado acima) |
 |---------|---------------------------------------------------------------|
-| chrome / chat / tickets / analyst / profile | stubs `ComingSoon` até a etapa correspondente |
+| chrome | `EmployeeSidebar` (expandido/encolhido), `EmployeeShell` |
+| chat | `EmployeeChatThread`, bolhas, `TicketSelectList`, `TicketDetailCard`, `ChatQuickReplies`, `ChatComposer` (consulta/transferência — estático) |
+| tickets / analyst / profile | stubs / em construção |
 | feedback | `LoadingSkeleton` / `InlineError` / `EmptyState` — **no estilo** dos cards/bordas existentes |
 
 Cada story: default + loading + erro + vazio + disabled (quando couber), lado a lado com a PNG de referência.

@@ -12,11 +12,16 @@ const prisma = new PrismaClient();
 
 async function main() {
   const ana = await prisma.employee.upsert({
-    where: { email: 'ana@nexo.local' },
-    update: {},
+    where: { id: 'emp_ana' },
+    update: {
+      email: 'ana.souza@nexo.com.br',
+      name: 'Ana Souza',
+      department: 'Engenharia',
+      role: 'EMPLOYEE',
+    },
     create: {
       id: 'emp_ana',
-      email: 'ana@nexo.local',
+      email: 'ana.souza@nexo.com.br',
       name: 'Ana Souza',
       department: 'Engenharia',
       role: 'EMPLOYEE',

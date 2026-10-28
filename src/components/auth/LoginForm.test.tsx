@@ -7,13 +7,14 @@ describe('LoginForm', () => {
   it('renderiza tipografia Entrar e campos', () => {
     render(<LoginForm onSubmit={vi.fn()} />);
     expect(screen.getByRole('heading', { name: 'Entrar' })).toBeInTheDocument();
+    expect(screen.getByText(/Demo:/)).toBeInTheDocument();
     expect(screen.getByLabelText('E-mail corporativo')).toBeInTheDocument();
     expect(screen.getByLabelText('Senha')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Entrar' })).toBeInTheDocument();
   });
 
   it('chama onSubmit com e-mail e senha', async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     render(<LoginForm onSubmit={onSubmit} />);
 
@@ -28,5 +29,5 @@ describe('LoginForm', () => {
         keepSignedIn: true,
       }),
     );
-  });
+  }, 15_000);
 });

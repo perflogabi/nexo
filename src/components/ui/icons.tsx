@@ -10,12 +10,14 @@ function IconBase({
   className,
   children,
   viewBox = '0 0 16 16',
+  width = 16,
+  height = 16,
   ...rest
 }: IconProps & { children: ReactNode; viewBox?: string }) {
   return (
     <svg
-      width={16}
-      height={16}
+      width={width}
+      height={height}
       viewBox={viewBox}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -118,6 +120,71 @@ export function IconArrowRight(props: IconProps) {
         d="M3 8h10M9 4.5 12.5 8 9 11.5"
         stroke="currentColor"
         strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </IconBase>
+  );
+}
+
+/** Bolha de chat — nav “Atendimento” (anexo Icon 3). */
+export function IconNavChat(props: IconProps) {
+  return (
+    <IconBase viewBox="0 0 15 14" width={15} height={14} {...props}>
+      <path
+        d="M1.2 1.1h12.6a1 1 0 0 1 1 1v7.2a1 1 0 0 1-1 1H5.2L1.5 13.2V2.1a1 1 0 0 1 .97-1Z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+    </IconBase>
+  );
+}
+
+/** Perfil — nav “Meu perfil” (anexo Icon 4). */
+export function IconNavProfile(props: IconProps) {
+  return (
+    <IconBase viewBox="0 0 12 14" width={12} height={14} {...props}>
+      <circle cx="6" cy="3.6" r="2.6" stroke="currentColor" strokeWidth="1.4" />
+      <path
+        d="M1.2 12.6c.4-2.6 2.2-4 4.8-4s4.4 1.4 4.8 4"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+    </IconBase>
+  );
+}
+
+/** Check — chips de ação do agent (“✓ consultou…”). */
+export function IconCheck(props: IconProps) {
+  return (
+    <IconBase viewBox="0 0 16 16" {...props}>
+      <path
+        d="M3.5 8.5 6.5 11.5 12.5 4.5"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </IconBase>
+  );
+}
+
+/** Sair — rodapé do sidebar. */
+export function IconLogout(props: IconProps) {
+  return (
+    <IconBase viewBox="0 0 16 16" {...props}>
+      <path
+        d="M6 2.5H3.5A1.5 1.5 0 0 0 2 4v8a1.5 1.5 0 0 0 1.5 1.5H6"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M6.5 8H14M11 5l3 3-3 3"
+        stroke="currentColor"
+        strokeWidth="1.4"
         strokeLinecap="round"
         strokeLinejoin="round"
       />

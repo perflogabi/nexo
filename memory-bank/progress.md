@@ -82,3 +82,5 @@
 | 2026-10-28 | Validação: lint/typecheck/test(100)/build/format OK; Storybook build OK com pin `webpack@5.101.2` |
 | 2026-10-28 | Login esquerda: `LoginShowcase` em código (logo/story/chat/stats); PNG só referência |
 | 2026-10-28 | Login: clean-up — `BrokenLines`, `login-layout.ts`, tokens 15″ vs 2xl; lint/test/SB |
+| 2026-10-28 | Chat: `EmployeeSidebar` responsivo (ícones anexo + mark encolhido) + `EmployeeShell` |
+| 2026-10-28 | Chat thread consulta/transferência: bolhas, lista radio, card INC, quick replies, composer (estático) |

@@ -57,7 +57,7 @@ export function Button({
       type={type}
       disabled={disabled}
       className={[
-        'font-ui inline-flex w-full items-center justify-center rounded-[var(--radius-sm)] font-semibold transition-colors',
+        'font-ui inline-flex w-auto items-center justify-center rounded-[var(--radius-sm)] font-semibold transition-colors',
         'disabled:cursor-not-allowed disabled:opacity-60',
         SIZE_CLASS[size],
         VARIANT_CLASS[variant],
