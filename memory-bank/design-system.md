@@ -6,7 +6,7 @@ Protótipo oficial (Anexo C). **Não** usar layouts genéricos da internet.
 
 | Tela | Arquivo de referência |
 |------|------------------------|
-| 1. Login | `docs/prototype/Identifica__o__desktop_-cfd7dac0-0355-4266-bfed-30f366e75432.png` |
+| 1. Login | `docs/prototype/Identifica__o__desktop_-58d2e59b-682e-4cf4-ad51-be2944ccab94.png` (atual) · legado `…cfd7dac0…` |
 | 2. Chat — novo chamado | `docs/prototype/Chat___Novo_chamado__desktop_-d1cc5381-7062-45a9-b07a-d5fc239a0e9d.png` |
 | 3. Chat — consulta / transferência | `docs/prototype/Chat___Consulta_e_transfer_ncia__desktop_-003fd2e6-e3b2-4504-8e99-ed0df522713b.png` |
 | 4. Console atendente | `docs/prototype/Atendente___Conversas__desktop_-2653730b-93d0-4f88-95e3-5c51053585ff.png` |
@@ -36,11 +36,11 @@ Artefatos analisados em ~1024×640 (desktop). Cores abaixo foram **amostradas** 
 :root {
   /* Brand / ação */
   --color-brand-blue: #007AF8;      /* logo “N” nas shells claras */
-  --color-primary: #0D65BD;         /* botões Entrar / Confirmar / Assumir / Enviar */
-  --color-primary-hover: /* não visível no protótipo — dúvida */;
+  --color-primary: #0062C5;         /* botões Entrar / Confirmar / Assumir / Enviar (amostra protótipo) */
+  --color-primary-hover: #0056AD;
 
   /* Superfícies */
-  --color-navy: #1B2531;            /* painel esquerdo login + bolha do usuário */
+  --color-navy: #1B2430;            /* painel esquerdo login (spec); bolha usuário */
   --color-bg: #FFFFFF;
   --color-bg-subtle: #F6F7F9;       /* rail / áreas secundárias console */
   --color-bg-chat-console: #EEF2F5; /* fundo da coluna central do atendente */
@@ -73,13 +73,26 @@ Artefatos analisados em ~1024×640 (desktop). Cores abaixo foram **amostradas** 
 
 ### Tipografia
 
-| Uso | Família observada | Peso | Onde |
-|-----|-------------------|------|------|
-| Display / títulos de página | **Serif** (login: headline e “Entrar”) | Regular/Medium | Login |
-| UI / corpo | **Sans-serif** geométrica limpa | Regular / Medium / Semibold | Shells, chat, console, perfil |
-| Meta / labels | Sans | Regular, menor | Breadcrumbs, labels de grid, contador 18/30 |
+| Uso | Família | Tamanho | Onde |
+|-----|---------|---------|------|
+| Headline login (painel esquerdo) | **Newsreader** | 46px (54px xl+) | Login esquerda |
+| Descrição login esquerda | **Schibsted Grotesk** | 16px | Login esquerda |
+| Métricas (números) footer login | **Newsreader** | 22px | Login esquerda |
+| Texto sob métricas | **Schibsted Grotesk** | 12px | Login esquerda |
+| Título “Entrar” | **Newsreader** | 40px | Login form |
+| Descrição do form | **Schibsted Grotesk** | 15.5px | Login form |
+| Labels / inputs / checkbox / erros | **Schibsted Grotesk** | 15.5px | Login form |
+| Botão “Entrar” | **Schibsted Grotesk** | 15.5px | Login form |
+| UI / corpo (shells) | **Schibsted Grotesk** | — | Chat, console, perfil |
 
-**Dúvida:** nomes exatos das fontes (não identificáveis com segurança nas PNGs). Hipótese de implementação: serif tipo *Source Serif 4* / *Lora* / *Newsreader* + sans tipo *IBM Plex Sans* / *Source Sans 3* — **escolher após comparação lado a lado**, não assumir Inter por default sem validar.
+**Decisão aprovada (assets oficiais):** **Newsreader** (display) + **Schibsted Grotesk** (UI). Classes: `.font-display` / `.font-ui` (também `--font-sans` / `--font-serif` no Tailwind).
+
+### Logos oficiais
+
+| Variante | Arquivo | Uso |
+|----------|---------|-----|
+| Brand (branco) | `public/brand/nexo-brand.png` | Painel navy do login |
+| Logo (app) | `public/brand/nexo-logo.png` | Sidebar funcionário, rail analista |
 
 ### Raios e bordas
 
@@ -106,22 +119,19 @@ Artefatos analisados em ~1024×640 (desktop). Cores abaixo foram **amostradas** 
 
 **Estrutura:** split-screen (≈56% navy | ≈44% branco).
 
-**Esquerda (navy `#1B2531`):**
-- Logo “N” branco + “Nexo Assist”
-- Eyebrow: “Service desk de TI da Nexo”
-- Headline **serif** branca
-- Parágrafo muted
-- Card ilustrativo de chat (mock): bolha clara + bolha escura + pill de chamado
-- Rodapé com **3 métricas** separadas por divisores verticais (8s / 72% / 6 analistas)
+**Esquerda (navy `#1B2430`) — em código (`LoginShowcase`), não imagem:**
+- 3 slots: logo · story+chat (centro) · métricas — largura `LOGIN_LEFT_BLOCK` (520 → 640 em 2xl)
+- Tokens/copy em `login-layout.ts`; quebras tipográficas via `BrokenLines` (`whitespace-nowrap` + `<br />`)
+- PNGs showcase/stats só como **referência visual** (não renderizados)
+- Breakpoint: compacto &lt; 2xl (~15″); 2xl+ (~27″) com tipografia/offset maiores
 
-**Direita (branco):**
-- Canto superior: “Problema para entrar? Ligue no ramal 4000” (link azul)
-- Título serif “Entrar” + subtítulo
-- Campos: e-mail (ícone envelope), senha (lock + toggle olho), focus azul
-- Link “Esqueci minha senha”
-- Checkbox “Manter conectado neste computador”
-- CTA full-width primary “Entrar →”
-- Footer: © 2026 · link privacidade
+**Direita (branco — referência `nexo-login-signin.png`):**
+- Fundo **sempre branco** (`#FFFFFF`)
+- Help no topo; form centrado H+V; footer no rodapé
+- Largura do form: `270px` → `320px` (xl) → `380px` (2xl)
+- Título Newsreader 40 “Entrar” + descrição Schibsted 15.5
+- `Input` / `Checkbox` / `Button` (CTA “Entrar →”) + divisor abaixo do botão
+- Footer: © 2026 · Privacidade
 
 **Não fazer:** login centralizado único painel; cards de features extras.
 
@@ -182,16 +192,15 @@ Sem gráficos, sem lista de chamados nesta tela.
 
 Agrupar por domínio; **não** forçar o mesmo shell em todas as histórias.
 
-| Domínio | Componentes |
-|---------|-------------|
-| brand | `NexoLogo`, `AvatarInitials` |
-| chrome-employee | `EmployeeSidebar`, `AppBreadcrumb`, `OnlineStatusPill` |
-| chrome-analyst | `AnalystIconRail`, `ConversationFilters`, `ConversationListItem` |
-| chat | `UserBubble`, `AgentMessageBlock`, `AgentActionChips`, `QuickReplyBar`, `Composer`, `SessionCounter` |
-| tickets | `TicketSelectList`, `TicketDetailCard`, `TicketDraftCard`, `EmployeeTicketsPanel` |
-| analyst | `AnalystChatHeader`, `SystemEventDivider`, `AnalystActionBar`, `IaBadge` |
-| auth | `LoginSplitLayout`, `LoginForm` |
-| profile | `ProfileDetailsCard`, `PasswordCard` |
+| Domínio | Componentes (implementados) |
+|---------|------------------------------|
+| ui | `Typography`, `Button` (`icon` esquerdo · `iconEnd` seta), `Input` (label/ícones/ação), `Checkbox` |
+| brand | `NexoLogo` (`brand` \| `app`) |
+| auth | `LoginSplitLayout`, `LoginForm`, `LoginShowcase` (asset Showcase oficial) |
+
+| Domínio | Componentes (próximas telas — layout já especificado acima) |
+|---------|---------------------------------------------------------------|
+| chrome / chat / tickets / analyst / profile | stubs `ComingSoon` até a etapa correspondente |
 | feedback | `LoadingSkeleton` / `InlineError` / `EmptyState` — **no estilo** dos cards/bordas existentes |
 
 Cada story: default + loading + erro + vazio + disabled (quando couber), lado a lado com a PNG de referência.

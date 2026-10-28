@@ -1,26 +1,83 @@
 @import 'tailwindcss';
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand / ação — memory-bank/design-system.md + ajuste login #1B2430 */
+  --color-brand-blue: #007af8;
+  --color-primary: #0062c4;
+  --color-primary-hover: #0056ad;
+
+  --color-navy: #1b2430;
+  --color-bg: #ffffff;
+  --color-bg-subtle: #f6f7f9;
+  --color-bg-chat-console: #eef2f5;
+  --color-bg-ia-bubble: #e6eef9;
+  --color-bg-nav-active: #e9eaef;
+  --color-bg-avatar: #e8f1fb;
+
+  --color-text: #1b2531;
+  --color-text-muted: #6b7280;
+  --color-text-on-navy: #ffffff;
+  --color-text-on-navy-muted: #9aa3ad;
+
+  --color-border: #d8d9dd;
+  --color-border-strong: #c5c7cc;
+
+  --color-success: #16a34a;
+  --color-success-soft: #e8f7f0;
+  --color-warning: #dbb03d;
+  --color-warning-text: #b45309;
+  --color-danger: #bd4a54;
+  --color-priority-high: #c97820;
+  --color-link: var(--color-primary);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  --sidebar-width: 220px;
+  --rail-width: 60px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-background: var(--color-bg);
+  --color-foreground: var(--color-text);
+  --font-sans: var(--font-schibsted);
+  --font-serif: var(--font-newsreader);
+  --color-nexo-primary: var(--color-primary);
+  --color-nexo-navy: var(--color-navy);
+  --color-nexo-border: var(--color-border);
+  --color-nexo-muted: var(--color-text-muted);
+  --color-nexo-subtle: var(--color-bg-subtle);
+  --color-nexo-brand: var(--color-brand-blue);
+  --color-nexo-danger: var(--color-danger);
+  --color-nexo-warning: var(--color-warning);
+  --color-nexo-success: var(--color-success);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-schibsted), system-ui, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-newsreader), Georgia, 'Times New Roman', serif;
+}
+
+.font-ui {
+  font-family: var(--font-schibsted), system-ui, sans-serif;
+}
+
+/* Input: ícone leading muda para primary no foco */
+.nexo-input-wrap .nexo-input-leading {
+  color: var(--color-text-muted);
+  transition: color 150ms ease;
+}
+.nexo-input-wrap:focus-within .nexo-input-leading,
+.nexo-input-wrap:focus-within .nexo-input-leading svg {
+  color: var(--color-primary);
+}
+.nexo-input-wrap .nexo-input-leading svg {
+  color: inherit;
 }

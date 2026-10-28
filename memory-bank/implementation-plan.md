@@ -48,13 +48,22 @@ Usar **npm** (`package-lock.json`).
 4. DecisionTrace
 5. Integração com LLM mockado
 
-## Fase 5 — UI funcionário
+## Fase 5 — UI fiel ao protótipo (ordem revisada: antes do agent)
 
-Login, `/chat`, `/profile` (leitura + stubs visuais). Fidelidade às PNGs. Storybook.
+1. [x] Tokens + fontes (Newsreader / Schibsted Grotesk) + `Typography` / `Button` reutilizáveis (ícones oficiais)
+2. [x] Login split, shell funcionário, chat (cards/quick replies), perfil
+3. [x] Console analista rail + 3 painéis; Assumir / Devolver (API)
+4. [x] Storybook de componentes-chave
 
-## Fase 6 — Console analista
+## Fase 6 — Agent Mastra (+ Gemini)
 
-Rail + lista + chat + painel de chamados. Assumir / devolver / encerrar.
+(originalmente Fase 4; UI veio antes por decisão do time)
+
+1. [ ] Tools tipadas + PolicyEngine
+2. [ ] ConfirmationGate no fluxo do chat
+3. [ ] Pause em atendimento humano; transferência com justificativa
+4. [ ] DecisionTrace persistido
+5. [ ] Integração com LLM mockado no CI
 
 ## Fase 7 — Qualidade e deploy
 

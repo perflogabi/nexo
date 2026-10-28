@@ -36,6 +36,9 @@
       "prettier --write"
     ]
   },
+  "overrides": {
+    "webpack": "5.101.2"
+  },
   "dependencies": {
     "@prisma/client": "^6.16.2",
     "next": "15.5.28",

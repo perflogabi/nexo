@@ -34,9 +34,7 @@ export type ConversationService = {
   listMyConversations(employeeId: string): Promise<ConversationRecord[]>;
   getConversation(conversationId: string, employeeId: string): Promise<ConversationRecord>;
   listMessages(conversationId: string, employeeId: string): Promise<MessageRecord[]>;
-  appendMessage(
-    input: AppendMessageInput,
-  ): Promise<{
+  appendMessage(input: AppendMessageInput): Promise<{
     message: MessageRecord;
     conversation: ConversationRecord;
     trace?: DecisionTraceRecord;
