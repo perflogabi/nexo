@@ -1,0 +1,41 @@
+---
+description: Qualidade de código, verificações e testes obrigatórios
+alwaysApply: true
+---
+
+# Qualidade e testes
+
+## Código
+
+- TypeScript `strict: true`; evitar `any` sem justificativa local.
+- Responsabilidades claras; separar apresentação · domain · persistência · integração IA (Mastra/Gemini).
+- Regras críticas do Anexo A no **domain** testável — não depender só do LLM.
+- Authz no servidor; sem vazamento cross-user.
+- Não adicionar dependências sem necessidade e justificativa.
+- Tailwind CSS para estilo; **não** Bootstrap CSS.
+
+## Testes (conforme a fase)
+
+- Unitário: regras de negócio e funções críticas (**sem** chamada real a Gemini).
+- Integração: services + persistência; agent com LLM **mockado**/injetado.
+- E2E (Playwright): fluxos principais do PRD quando a fase de UI existir.
+- Não remover, enfraquecer ou ignorar testes só para pipeline verde.
+- Não alterar snapshots/expectativas sem confirmar mudança de comportamento correta.
+- Não afirmar que testes passaram se não foram executados.
+
+## Antes de concluir a tarefa
+
+Executar o que os scripts do `package.json` permitirem:
+
+1. `npm run lint`
+2. `npm run typecheck`
+3. `npm test` (ou o script de unitários real)
+4. `npm run build` quando a mudança afetar app/produção
+
+Se o script **ainda não existir** (pré-bootstrap): declarar pendência — não inventar comando nem fingir sucesso. Corrigir problemas **introduzidos pela tarefa** antes de concluir.
+
+## CI
+
+- GitHub Actions não deve exigir secret Gemini para testes com mock.
+- Não rodar migrations contra banco de produção no CI.
+- Detalhes de conteúdo de testes: também `.cursor/rules/testing-standards.mdc`.

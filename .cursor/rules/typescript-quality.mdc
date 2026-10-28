@@ -1,0 +1,15 @@
+---
+description: Convenções TypeScript e organização de módulos
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# TypeScript
+
+- `strict: true`; preferir `unknown` + narrowing a `any`.
+- Erros tipados de domínio (`TicketServiceUnavailableError`, `ConfirmationInvalidError`, …).
+- Funções puras de policy sem I/O; I/O em services/repositories.
+- Nomes alinhados ao PRD: INC/REQ, prioridades, status de conversa.
+- Não adicionar deps ou telas fora da fase em `progress.md`.
+- Comentários só para intenção não óbvia.
+- Git/commits: ver `git-workflow.mdc`. Qualidade/gates: ver `quality-and-testing.mdc`.

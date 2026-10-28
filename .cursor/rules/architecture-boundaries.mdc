@@ -1,0 +1,21 @@
+---
+description: Limites entre UI, agent, services e persistência
+globs: src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Limites de arquitetura
+
+| Camada | Local | Pode | Não pode |
+|--------|-------|------|----------|
+| UI | `app/`, `components/` | actions/APIs | regras Anexo A; LLM no client |
+| Application | `services/*` | casos de uso + authz | prompts |
+| Domain | `domain/` | SLA, duplicidade, transfer | Prisma, LLM, React |
+| Agent | `agent/` | tools + orchestration | mutar Ticket sem ConfirmationGate; responder se pausado |
+| Repositories | `repositories/` ou colocalizado | queries tipadas | policy de negócio |
+| Persistence | `prisma/` | schema/migrations | prioridade/SLA |
+
+- Ticket Service separado do agent; agent depende de interface.
+- Duplicidade: regra determinística no domain; LLM não decide sozinho.
+- Sem abstrações extras sem justificativa em `architecture.md`.
+- UI não importa `agent/` no client.

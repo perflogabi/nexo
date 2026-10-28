@@ -1,0 +1,14 @@
+---
+description: Rotas App Router e padrões de UI do chat/console
+globs: src/app/**/*.{ts,tsx},src/components/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# UI e rotas
+
+- Rotas: `/login`, `/chat`, `/profile` (leitura + stubs), `/analyst` (rail + 3 painéis).
+- Fidelidade: `docs/prototype/` + `design-system.md` (`visual-fidelity`).
+- Login split; funcionário sidebar+main; analista **não** reutilizar shell do chat.
+- Chat: chips `✓` + detalhe de decisão; draft Confirmar/Editar/Cancelar; limite 30 no servidor.
+- Console: filtros; Assumir/Devolver/Encerrar; painel de chamados do funcionário da conversa.
+- Perfil: sem reset real de senha. Storybook + loading/erro/vazio na identidade do protótipo.

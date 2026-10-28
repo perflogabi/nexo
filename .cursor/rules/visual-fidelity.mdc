@@ -1,0 +1,15 @@
+---
+description: Fidelidade obrigatória ao protótipo oficial Nexo Assist
+alwaysApply: true
+---
+
+# Fidelidade visual
+
+- Fonte da verdade: PNGs em `docs/prototype/` + `memory-bank/design-system.md`.
+- Não usar layouts/cores genéricos da internet como substituto.
+- Preservar estruturas distintas: login split · shell funcionário (sidebar+main) · console (rail + 3 painéis).
+- Não inventar dashboards, menus ou cards ausentes no protótipo sem necessidade funcional justificada e registro em `progress.md`.
+- Componentes reutilizáveis sim; uniformizar telas diferentes não.
+- Estados loading/erro/vazio/disabled na mesma identidade (tokens do design system).
+- Detalhe visual incerto → dúvida documentada; não inventar token.
+- Storybook obrigatório para validar componentes isolados antes de fechar a tela.

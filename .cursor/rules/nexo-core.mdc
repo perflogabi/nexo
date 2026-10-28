@@ -1,0 +1,16 @@
+---
+description: Regras centrais do Nexo Assist (PRD, stack, Memory Bank)
+alwaysApply: true
+---
+
+# Nexo Assist — Core
+
+- Seguir `AGENTS.md`, PRD, `memory-bank/` e `docs/prototype/`.
+- Distinguir requisito PRD vs decisão aprovada vs hipótese (`progress.md`, `requirements-resolution.md`).
+- Stack: Next.js App Router · TS strict · Tailwind (sem Bootstrap) · npm · Mastra · **Gemini** (`@google/genai` na integração) · PG+Prisma · Vitest/RTL/Playwright · Storybook · ESLint/Prettier · Husky · GHA · Vercel (previsto).
+- Anexo A em `domain/` testável — não só no prompt Gemini.
+- Mutações de chamado: ConfirmationGate quando o PRD exigir.
+- Agent pausado sob atendimento humano; limite 30 msgs (interpretação em Memory Bank).
+- Authz no servidor; sem vazamento cross-user.
+- Segredos só em env; CI com mocks (sem chamada real Gemini).
+- Mudança de decisão arquitetural: registrar no Memory Bank — nunca silenciosa.

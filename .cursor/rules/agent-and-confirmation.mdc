@@ -1,0 +1,16 @@
+---
+description: Agent Mastra, tools e gate de confirmação
+globs: src/agent/**/*.{ts,tsx},src/domain/**/*.ts,src/services/**/*.ts
+alwaysApply: false
+---
+
+# Agent e confirmação
+
+- Preferir Mastra; tools tipadas com side-effects controlados.
+- Fluxo mutável: `prepareTicketDraft` → UI confirma → `confirmTicketMutation(token)`.
+- `PendingConfirmation`: one-shot, com `employeeId`, expiração; rejeitar token alheio/expirado/consumido.
+- Toda resposta do agent persiste `DecisionTrace` (intent, actions, confidence, rationale, policyHits).
+- Transferência: `USER_REQUEST`/`CRITICAL`/`OVERDUE`/`LOW_CONFIDENCE` separados; score LLM não decide sozinho.
+- Limite: 30 msgs/sessão (interpretação: employee+agent na Conversation); bloqueio transacional no servidor.
+- Fora de escopo: redirecionar via policy, não improvisar no prompt.
+- Nunca executar create/update/reopen “porque o LLM pediu” sem passar no ConfirmationGate + PolicyEngine.

@@ -1,0 +1,10 @@
+node_modules
+.next
+out
+coverage
+storybook-static
+package-lock.json
+prisma/migrations
+memory-bank
+docs/prototype
+*.pdf

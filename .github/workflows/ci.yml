@@ -1,0 +1,62 @@
+# CI — Nexo Assist
+# Scripts: lint | typecheck | test | prisma validate | build
+# Não chama a API Gemini. Não executa migrations (dev/deploy) nem db push.
+# Placeholders DATABASE_URL/DIRECT_URL existem só para validate sintático — sem conexão Neon real.
+
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+        env:
+          CI: true
+
+      - name: Prisma validate
+        run: npx prisma validate
+        env:
+          # URLs sintáticas (formato Neon); CI não conecta nem aplica migrate
+          DATABASE_URL: postgresql://user:pass@ep-example-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require
+          DIRECT_URL: postgresql://user:pass@ep-example.us-east-1.aws.neon.tech/neondb?sslmode=require
+
+      - name: Production build
+        run: npm run build
+        env:
+          CI: true

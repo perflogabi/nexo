@@ -1,0 +1,227 @@
+// Skeleton alinhado a memory-bank/data-model.md
+// Banco oficial: Neon (PostgreSQL gerenciado). Sem Postgres local obrigatório.
+// Prisma 6: url = pooled (app); directUrl = conexão direta (migrate/introspect).
+// Não aplicar migrate no Neon remoto sem autorização e credenciais configuradas.
+// Hipóteses (TTL PendingConfirmation, Jaccard, etc.) não são requisitos PRD.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  EMPLOYEE
+  ANALYST
+}
+
+enum ConversationStatus {
+  WITH_AGENT
+  WAITING_ANALYST
+  WITH_ANALYST
+  CLOSED
+}
+
+enum TransferReasonCode {
+  USER_REQUEST
+  CRITICAL
+  OVERDUE
+  LOW_CONFIDENCE
+}
+
+enum AuthorType {
+  EMPLOYEE
+  AGENT
+  ANALYST
+  SYSTEM
+}
+
+enum TicketType {
+  INC
+  REQ
+}
+
+enum Category {
+  ACESSO
+  REDE_VPN
+  HARDWARE
+  SOFTWARE
+  EMAIL
+  OUTROS
+}
+
+enum Priority {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum TicketStatus {
+  OPEN
+  WAITING_ANALYST
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+  APPROVED
+}
+
+enum PendingOperation {
+  CREATE
+  UPDATE
+  REOPEN
+}
+
+enum PresentedAssurance {
+  UNKNOWN
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TicketEventKind {
+  CREATED
+  UPDATED
+  REOPENED
+  STATUS_CHANGED
+  PRIORITY_CHANGED
+}
+
+model Employee {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  name       String
+  department String?
+  role       Role
+  createdAt  DateTime @default(now())
+
+  ownedConversations    Conversation[]       @relation("ConversationEmployee")
+  assignedConversations Conversation[]       @relation("AssignedConversations")
+  ownedTickets          Ticket[]             @relation("OwnedTickets")
+  affectedTickets       Ticket[]             @relation("AffectedTickets")
+  pendingConfirmations  PendingConfirmation[]
+}
+
+/// agentPaused é DERIVADO de status ∈ {WAITING_ANALYST, WITH_ANALYST} — não persistir.
+model Conversation {
+  id                 String               @id @default(cuid())
+  employeeId         String
+  status             ConversationStatus   @default(WITH_AGENT)
+  messageCount       Int                  @default(0)
+  transferSummary    String?
+  transferReasonCode TransferReasonCode?
+  assignedAnalystId  String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  employee         Employee               @relation("ConversationEmployee", fields: [employeeId], references: [id], onDelete: Restrict)
+  assignedAnalyst  Employee?              @relation("AssignedConversations", fields: [assignedAnalystId], references: [id], onDelete: Restrict)
+  messages         Message[]
+  pendingConfirmations PendingConfirmation[]
+
+  @@index([status, updatedAt])
+  @@index([assignedAnalystId, status])
+  @@index([employeeId, updatedAt])
+}
+
+model Message {
+  id                String     @id @default(cuid())
+  conversationId    String
+  authorType        AuthorType
+  /// Sem FK polimórfica — validação no serviço conforme authorType (data-model.md §3.3)
+  authorId          String?
+  content           String
+  structuredPayload Json?
+  createdAt         DateTime   @default(now())
+
+  conversation   Conversation    @relation(fields: [conversationId], references: [id], onDelete: Restrict)
+  decisionTrace  DecisionTrace?
+
+  @@index([conversationId, createdAt])
+}
+
+model DecisionTrace {
+  id                  String              @id @default(cuid())
+  messageId           String              @unique
+  understoodIntent    String
+  actions             Json
+  rationale           String
+  policyHits          Json
+  toolCalls           Json
+  modelConfidence     Float?
+  presentedAssurance  PresentedAssurance  @default(UNKNOWN)
+  createdAt           DateTime            @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Restrict)
+}
+
+model Ticket {
+  id                 String       @id @default(cuid())
+  number             String       @unique
+  type               TicketType
+  title              String
+  description        String
+  category           Category
+  priority           Priority
+  status             TicketStatus
+  ownerEmployeeId    String
+  affectedEmployeeId String
+  slaDeadlineAt      DateTime
+  resolvedAt         DateTime?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  owner    Employee      @relation("OwnedTickets", fields: [ownerEmployeeId], references: [id], onDelete: Restrict)
+  affected Employee      @relation("AffectedTickets", fields: [affectedEmployeeId], references: [id], onDelete: Restrict)
+  events   TicketEvent[]
+
+  @@index([ownerEmployeeId, status])
+  @@index([ownerEmployeeId, category, status])
+  @@index([ownerEmployeeId, resolvedAt])
+}
+
+model TicketEvent {
+  id        String          @id @default(cuid())
+  ticketId  String
+  kind      TicketEventKind
+  summary   String
+  actorType AuthorType
+  actorId   String?
+  createdAt DateTime        @default(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Restrict)
+
+  @@index([ticketId, createdAt])
+}
+
+model HelpArticle {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  body      String
+  tags      String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// TTL de expiresAt é hipótese (H) — valor definido na aplicação, não requisito PRD.
+model PendingConfirmation {
+  id             String           @id @default(cuid())
+  token          String           @unique
+  conversationId String
+  employeeId     String
+  operation      PendingOperation
+  payload        Json
+  expiresAt      DateTime
+  consumedAt     DateTime?
+  createdAt      DateTime         @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  employee     Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, consumedAt])
+}

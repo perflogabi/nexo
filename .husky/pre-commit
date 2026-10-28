@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# Ativa após `git init` + `npm install` (prepare/husky). Sem repositório Git, o hook não roda.
+npx lint-staged

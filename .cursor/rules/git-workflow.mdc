@@ -1,0 +1,41 @@
+---
+description: Fluxo obrigatório de Git — commits, push e relatório de tarefa
+alwaysApply: true
+---
+
+# Git workflow
+
+## Autorização
+
+- **Nunca** executar `git commit` ou `git push` sem autorização explícita do usuário nesta conversa.
+- Pode preparar diff, sugerir mensagem Conventional Commit e listar arquivos — aguardar “pode commit” / “pode push”.
+- Se o diretório ainda não for um repositório Git, **não** rodar `git init` sem autorização.
+
+## Commits
+
+- Alterações pequenas e logicamente agrupadas; um commit por unidade coerente (não um commit por arquivo artificial; não um mega-commit do projeto inteiro).
+- Conventional Commits, por exemplo:
+  - `chore: initialize Next.js project`
+  - `feat: add employee chat interface`
+  - `fix: prevent access to another employee's tickets`
+  - `test: cover ticket transfer rules`
+  - `ci: add GitHub Actions workflow`
+  - `docs: update setup instructions`
+- Antes de commit (quando autorizado): revisar `git status` / `git diff`; excluir `.env`, credenciais, tokens, gerados desnecessários e mudanças não relacionadas.
+- Não usar `--no-verify` / skip de hooks sem pedido explícito.
+- Não `commit --amend` de commit já pushed ou que não seja seu, salvo regras do usuário.
+
+## Push e histórico
+
+- Recomendar push após unidade validada ou conjunto pequeno de commits.
+- Nunca `git push --force`, rebase/reset destrutivo ou reescrita de histórico compartilhado sem autorização explícita e explicação do impacto.
+- Não enviar para `main`/`master` sem verificar o fluxo do repositório.
+- Não presumir working tree limpo; não descartar alterações do usuário para “resolver” conflitos sem autorização.
+
+## Ao concluir uma tarefa (obrigatório informar)
+
+1. Arquivos modificados  
+2. Testes/verificações executados  
+3. Resultado (ou motivo se não rodaram)  
+4. Se há alterações prontas para commit  
+5. Sugestão de mensagem Conventional Commit, quando pertinente  

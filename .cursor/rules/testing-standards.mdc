@@ -1,0 +1,17 @@
+---
+description: Conteúdo e escopo dos testes (Vitest, RTL, Playwright)
+globs: "**/*.{test,spec}.{ts,tsx},tests/**/*,e2e/**/*,**/*.stories.*"
+alwaysApply: false
+---
+
+# Padrões de conteúdo de testes
+
+Complementa `quality-and-testing.mdc` (processo e gates).
+
+- Unitário: PolicyEngine, ConfirmationGate, authz, SLA, duplicidade, reopen, transfer reasons — **sem** Gemini real.
+- Integração: TicketService + conversas + agent com LLM **mockado**/injetado.
+- Componentes: RTL — loading/erro/pausado/draft/trace.
+- E2E: login, dúvida, abertura+confirmação, transferência, console analista, privacidade.
+- Preferir `E2E=1` scripted agent a LLM flaky; documentar no README.
+- Nomear pela regra: `canReopen within 7 days`, não `test1`.
+- Não snapshotar CSS em massa; não assertar texto bruto de prompt.
