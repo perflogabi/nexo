@@ -27,7 +27,7 @@ Usar **npm** (`package-lock.json`).
 ## Fase 2 — Domínio e Ticket Service
 
 1. [x] Enums + PolicyEngine (SLA crítica corrida vs úteis; duplicidade Jaccard; reopen 7d; transfer por reasonCode; escopo TI) — Fase 2.1
-2. [ ] ConfirmationGate (domínio) — Fase 2.2
+2. [x] ConfirmationGate (domínio) — Fase 2.2
 3. [ ] `TicketService` + repositório Prisma + falha intermitente — Fase 2.3
 4. [ ] Help Center + seed (funcionários e **analistas distintos**)
 5. [ ] Testes unitários restantes do domínio / integração TicketService

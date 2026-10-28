@@ -18,6 +18,8 @@ export type Priority = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 export type TicketStatus =
   'OPEN' | 'WAITING_ANALYST' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' | 'APPROVED';
 
+export type PendingOperation = 'CREATE' | 'UPDATE' | 'REOPEN';
+
 /** Domínios usados em isInTiScope — fora do enum Category do ticket. */
 export type RequestDomain = 'TI' | 'RH' | 'FINANCEIRO' | 'FACILITIES' | 'OTHER_NON_TI';
 
