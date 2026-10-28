@@ -21,7 +21,11 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
+    "db:seed": "node --experimental-strip-types prisma/seed.ts",
     "prepare": "husky || true"
+  },
+  "prisma": {
+    "seed": "node --experimental-strip-types prisma/seed.ts"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs}": [

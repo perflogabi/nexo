@@ -36,6 +36,7 @@ A hipótese “validar pooling em produção no projeto Neon real” permanece *
 ```bash
 npm run db:generate
 npm run db:validate
+npm run db:seed          # seed mínimo idempotente (após migrate)
 ```
 
 ## Migrations

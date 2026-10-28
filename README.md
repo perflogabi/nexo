@@ -28,6 +28,7 @@ Abra [http://localhost:3000](http://localhost:3000).
 | `npm run db:migrate:dev`    | `prisma migrate dev` (dev; requer Neon + autorização) |
 | `npm run db:migrate:deploy` | `prisma migrate deploy` (prod/CI autorizado)          |
 | `npm run db:studio`         | `prisma studio`                                       |
+| `npm run db:seed`           | Seed mínimo idempotente (demo)                        |
 
 ### Banco (Neon + Prisma)
 

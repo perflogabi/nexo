@@ -28,9 +28,9 @@ Usar **npm** (`package-lock.json`).
 
 1. [x] Enums + PolicyEngine (SLA crítica corrida vs úteis; duplicidade Jaccard; reopen 7d; transfer por reasonCode; escopo TI) — Fase 2.1
 2. [x] ConfirmationGate (domínio) — Fase 2.2
-3. [ ] `TicketService` + repositório Prisma + falha intermitente — Fase 2.3
-4. [ ] Help Center + seed (funcionários e **analistas distintos**)
-5. [ ] Testes unitários restantes do domínio / integração TicketService
+3. [x] `TicketService` + store Prisma/in-memory + falha intermitente — Fase 2.3
+4. [x] Help Center (leitura) + seed (funcionários e **analistas distintos**)
+5. [x] Testes unitários TicketService / Help Center (integração DB real opcional depois)
 
 ## Fase 3 — Auth e conversas
 
