@@ -31,9 +31,11 @@ export type AnalystConversationAccessInput = {
 };
 
 /**
- * Analista:
+ * Analista (console / leitura):
  * - Fila: qualquer WAITING_ANALYST (claim atômico fica no serviço)
  * - Atendimento: WITH_ANALYST e assignedAnalystId = self
+ * - Visão “Com o agent” / resolvidas: WITH_AGENT e CLOSED (somente leitura no console;
+ *   mutações continuam restritas nas rotas de claim/return/close/send)
  */
 export function canAnalystAccessConversation(input: AnalystConversationAccessInput): boolean {
   if (input.role !== 'ANALYST') return false;
@@ -41,6 +43,7 @@ export function canAnalystAccessConversation(input: AnalystConversationAccessInp
   if (input.status === 'WITH_ANALYST' && input.assignedAnalystId === input.analystId) {
     return true;
   }
+  if (input.status === 'WITH_AGENT' || input.status === 'CLOSED') return true;
   return false;
 }
 

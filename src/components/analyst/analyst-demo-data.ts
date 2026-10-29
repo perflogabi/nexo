@@ -2,6 +2,10 @@ export type ConversationFilterId = 'todas' | 'para-voce' | 'com-agent' | 'minhas
 
 export type ConversationListStatusTone = 'transfer' | 'help' | 'active' | 'resolved';
 
+/** Status de domínio na lista viva; omitido no DEMO estático. */
+export type AnalystListConversationStatus =
+  'WITH_AGENT' | 'WAITING_ANALYST' | 'WITH_ANALYST' | 'CLOSED';
+
 export type ConversationListItemData = {
   id: string;
   name: string;
@@ -13,6 +17,8 @@ export type ConversationListItemData = {
   preview: string;
   previewKind?: 'text' | 'typing' | 'nexo';
   status: { tone: ConversationListStatusTone; label: string };
+  /** Presente nas conversas da API (roteamento de Assumir / dedupe). */
+  conversationStatus?: AnalystListConversationStatus;
   unread?: number;
 };
 

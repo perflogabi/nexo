@@ -32,7 +32,8 @@ type Props = {
 const LG_QUERY = '(min-width: 1024px)';
 
 function isClaimedItem(item: ConversationListItemData | undefined): boolean {
-  return item?.status.tone === 'active';
+  // "Agent atendendo" também usa tom active — claimed = só pós Assumir.
+  return item?.status.label === 'Em atendimento';
 }
 
 function initialsFromName(name: string): string {

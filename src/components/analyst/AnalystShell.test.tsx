@@ -1,6 +1,10 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { AnalystShell } from '@/components/analyst/AnalystShell';
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: vi.fn(), refresh: vi.fn() }),
+}));
 
 describe('AnalystShell', () => {
   it('no mobile com pane=chat, lista fica hidden e chat visível', () => {

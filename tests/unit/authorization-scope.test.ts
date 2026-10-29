@@ -65,6 +65,25 @@ describe('canAnalystAccessConversation / Ticket', () => {
     ).toBe(false);
   });
 
+  it('allows read-only console views for WITH_AGENT and CLOSED', () => {
+    expect(
+      canAnalystAccessConversation({
+        analystId: 'an1',
+        role: 'ANALYST',
+        status: 'WITH_AGENT',
+        assignedAnalystId: null,
+      }),
+    ).toBe(true);
+    expect(
+      canAnalystAccessConversation({
+        analystId: 'an1',
+        role: 'ANALYST',
+        status: 'CLOSED',
+        assignedAnalystId: null,
+      }),
+    ).toBe(true);
+  });
+
   it('scopes tickets to conversation employee only', () => {
     expect(
       canAnalystAccessTicket({

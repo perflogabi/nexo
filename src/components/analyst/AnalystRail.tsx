@@ -1,5 +1,9 @@
+'use client';
+
 import Image from 'next/image';
-import { IconNavChat } from '@/components/ui/icons';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { IconLogout, IconNavChat } from '@/components/ui/icons';
 import { ANALYST_RAIL } from '@/components/analyst/analyst-demo-data';
 
 type Props = {
@@ -18,6 +22,20 @@ export function AnalystRail({
   analystInitials = ANALYST_RAIL.analystInitials,
   className = '',
 }: Props) {
+  const router = useRouter();
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      router.replace('/login');
+      router.refresh();
+    } finally {
+      setLoggingOut(false);
+    }
+  }
+
   return (
     <aside
       className={[
@@ -66,7 +84,7 @@ export function AnalystRail({
         </button>
       </div>
 
-      <div className="lg:mt-auto">
+      <div className="flex items-center gap-3 lg:mt-auto lg:flex-col lg:gap-3">
         <span className="relative inline-flex size-9 items-center justify-center rounded-full bg-[var(--color-bg-avatar)]">
           <span className="text-[12px] font-semibold text-[var(--color-primary)]">
             {analystInitials}
@@ -76,6 +94,23 @@ export function AnalystRail({
             aria-label="online"
           />
         </span>
+
+        <button
+          type="button"
+          onClick={() => void handleLogout()}
+          disabled={loggingOut}
+          title="Sair"
+          aria-label={loggingOut ? 'Saindo' : 'Sair'}
+          className={[
+            'flex size-9 items-center justify-center rounded-[10px]',
+            'text-[var(--color-text-muted)] transition-colors',
+            'hover:bg-white hover:text-[var(--color-text)]',
+            'disabled:cursor-not-allowed disabled:opacity-60',
+            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)]',
+          ].join(' ')}
+        >
+          <IconLogout className="size-4" />
+        </button>
       </div>
     </aside>
   );
