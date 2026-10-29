@@ -4,6 +4,8 @@
  */
 
 import { GoogleGenAI, type FunctionDeclaration, type Content } from '@google/genai';
+import { assertGeminiApiKey } from '@/lib/gemini-api-key';
+import { safeErrorMessage } from '@/lib/redact-secrets';
 import { mapTicketToDetailPayload, mapTicketsToSelectPayload } from '@/agent/chat-ui-payload';
 import { NEXO_AGENT_INSTRUCTIONS } from '@/agent/instructions';
 import type { AgentBrain, AgentReplyDraft, AgentToolCallTrace } from '@/agent/types';
@@ -197,10 +199,7 @@ async function dispatchTool(
 }
 
 export function createGeminiAgentBrain(getContext: () => AgentToolContext): AgentBrain {
-  const apiKey = process.env.GEMINI_API_KEY?.trim();
-  if (!apiKey) {
-    throw new Error('GEMINI_API_KEY required for gemini brain');
-  }
+  const apiKey = assertGeminiApiKey();
   const ai = new GoogleGenAI({ apiKey });
   let activeModel = PRIMARY_MODEL;
 
@@ -227,7 +226,7 @@ export function createGeminiAgentBrain(getContext: () => AgentToolContext): Agen
         if (!isRetryableGeminiError(e)) throw e;
         console.warn(
           `[agent] Gemini modelo ${model} falhou — tentando próximo:`,
-          e instanceof Error ? e.message.slice(0, 160) : e,
+          safeErrorMessage(e).slice(0, 160),
         );
       }
     }

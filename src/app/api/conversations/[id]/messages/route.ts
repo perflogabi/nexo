@@ -5,6 +5,8 @@ import {
   ConversationNotFoundError,
   MessageLimitExceededError,
 } from '@/domain/errors';
+import { agentRateLimitConfig, clientIpFromRequest, consumeRateLimit } from '@/lib/rate-limit';
+import { rateLimitedResponse } from '@/lib/rate-limit-response';
 import { getAgentOrchestrator, getConversationService } from '@/lib/services';
 import { readSession } from '@/lib/server-session';
 
@@ -42,6 +44,12 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   const { id } = await params;
+  const ip = clientIpFromRequest(request);
+  const limited = consumeRateLimit(`agent:${session.employeeId}:${ip}`, agentRateLimitConfig());
+  if (!limited.ok) {
+    return rateLimitedResponse(limited.retryAfterSec);
+  }
+
   const body = (await request.json()) as { content?: string };
   const content = body.content?.trim() ?? '';
   if (!content) {

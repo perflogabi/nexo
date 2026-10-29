@@ -7,6 +7,7 @@ import { resolveAgentLlmMode } from '@/agent/llm-mode';
 import { createMockAgentBrain } from '@/agent/mock-brain';
 import type { AgentBrain, AgentReplyDraft, AgentTurnInput } from '@/agent/types';
 import type { AgentToolContext } from '@/agent/tools/tool-context';
+import { safeErrorMessage } from '@/lib/redact-secrets';
 
 /** Tempo para a cadeia de modelos + tools; depois cai no mock. */
 const DEFAULT_GEMINI_TIMEOUT_MS = 20_000;
@@ -65,7 +66,7 @@ export function createGeminiWithMockFallbackBrain(
         }
         return draft;
       } catch (e) {
-        const reason = e instanceof Error ? e.message : 'gemini_error';
+        const reason = safeErrorMessage(e) || 'gemini_error';
         options?.onFallback?.(reason);
         if (process.env.NODE_ENV !== 'test') {
           console.warn('[agent] Gemini indisponível — usando mock:', reason);

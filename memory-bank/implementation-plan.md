@@ -69,7 +69,7 @@ Usar **npm** (`package-lock.json`).
 ## Fase 7 — Qualidade e deploy
 
 1. [x] Docker Compose (app + Postgres) para avaliadores — `docs/docker.md`
-2. Rate limit / proteção de chave Gemini
+2. [x] Rate limit (login + agent) / proteção de chave Gemini (redação + só server)
 3. Playwright E2E
 4. README (arquitetura, agent, trade-offs, SLA simplificado, como rodar + Docker)
 5. Deploy Vercel + Neon (validar pooling)

@@ -26,6 +26,7 @@
 - [x] Console analista: mensagens/tickets reais + Assumir/Devolver/Encerrar (`CLOSED`); `/chat` com transcript da API + seed
 - [x] **Fase 6 (slice)** Agent: Mastra tools + mock/Gemini brain, orquestrador, DecisionTrace, pause, transfer, confirm route
 - [x] **Fase 7 (slice)** Docker Compose + Dockerfile standalone para avaliadores (`docs/docker.md`)
+- [x] **Fase 7 (slice)** Rate limit login/agent (429) + redação de segredos / chave Gemini só no server
 
 ## Verificações confirmadas
 
@@ -60,7 +61,7 @@
 ## Próximo marco recomendado
 
 1. Polir chat: carregar DecisionTrace no GET, quick replies → confirm, streaming SSE opcional.
-2. **Fase 7** — rate limit/chave Gemini → E2E → README → deploy Vercel/Neon (Docker avaliadores: feito).
+2. **Fase 7** — E2E → README → deploy Vercel/Neon (Docker + rate limit/chave Gemini: feitos).
 
 ## Log
 
@@ -103,3 +104,4 @@
 | 2026-10-28 | Seed console: Ana/Carla/Bruno/Diego/Elisa/Fábio/Gabriela + lista WITH_AGENT/CLOSED |
 | 2026-10-28 | Analyst: lista 1 conversa/pessoa (fila > /chat); UI Assumir do protótipo; Ana = Financeiro |
 | 2026-10-29 | Docker: Compose app+Postgres, entrypoint migrate/seed, `docs/docker.md` |
+| 2026-10-29 | Rate limit (login/agent) + redação GEMINI_API_KEY/AUTH_SECRET em logs |

@@ -1,12 +1,20 @@
 import { NextResponse } from 'next/server';
 import { AuthError } from '@/domain/errors';
 import { getAuthSecret } from '@/lib/auth-secret';
+import { clientIpFromRequest, consumeRateLimit, loginRateLimitConfig } from '@/lib/rate-limit';
+import { rateLimitedResponse } from '@/lib/rate-limit-response';
 import { getAuthService } from '@/lib/services';
 import { SESSION_COOKIE_NAME, SESSION_TTL_SECONDS } from '@/lib/session';
 import { sessionCookieOptions } from '@/lib/server-session';
 
 export async function POST(request: Request) {
   try {
+    const ip = clientIpFromRequest(request);
+    const limited = consumeRateLimit(`login:${ip}`, loginRateLimitConfig());
+    if (!limited.ok) {
+      return rateLimitedResponse(limited.retryAfterSec);
+    }
+
     const body = (await request.json()) as { email?: string; password?: string };
     const email = body.email?.trim() ?? '';
     const password = body.password ?? '';

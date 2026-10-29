@@ -3,6 +3,8 @@
  * AGENT_LLM=mock|gemini força o modo; default: mock se CI ou sem GEMINI_API_KEY.
  */
 
+import { getGeminiApiKey } from '@/lib/gemini-api-key';
+
 export type AgentLlmMode = 'mock' | 'gemini';
 
 export function resolveAgentLlmMode(
@@ -12,6 +14,6 @@ export function resolveAgentLlmMode(
   if (forced === 'mock') return 'mock';
   if (forced === 'gemini') return 'gemini';
   if (env.CI === 'true' || env.CI === '1') return 'mock';
-  if (!env.GEMINI_API_KEY?.trim()) return 'mock';
+  if (!getGeminiApiKey(env)) return 'mock';
   return 'gemini';
 }
