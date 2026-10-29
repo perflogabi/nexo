@@ -1,6 +1,6 @@
 /**
  * ConversationService — ownership, mensagens e limite 30 no servidor.
- * Agent Mastra/Gemini fica para Fase 4; aqui só persistência + regras.
+ * Agent Mastra/Gemini orquestra em `src/agent`; aqui persistência + regras.
  */
 
 import { isAgentPaused } from '@/domain/conversation-status';
@@ -15,6 +15,8 @@ import {
   countsTowardMessageLimit,
   MESSAGE_LIMIT_PER_CONVERSATION,
 } from '@/domain/message-limit';
+import { canTransitionConversation, transferTransitionRequirements } from '@/domain/transfer';
+import type { TransferReasonCode } from '@/domain/types';
 import type { ConversationStore } from './conversation-store';
 import type {
   AppendMessageInput,
@@ -29,6 +31,13 @@ export type ConversationServiceDeps = {
   createId?: () => string;
 };
 
+export type TransferToAnalystInput = {
+  conversationId: string;
+  sessionEmployeeId: string;
+  summary: string;
+  reasonCode: TransferReasonCode;
+};
+
 export type ConversationService = {
   createConversation(employeeId: string): Promise<ConversationRecord>;
   listMyConversations(employeeId: string): Promise<ConversationRecord[]>;
@@ -39,6 +48,7 @@ export type ConversationService = {
     conversation: ConversationRecord;
     trace?: DecisionTraceRecord;
   }>;
+  transferToAnalyst(input: TransferToAnalystInput): Promise<ConversationRecord>;
 };
 
 function defaultId(): string {
@@ -145,6 +155,30 @@ export function createConversationService(deps: ConversationServiceDeps): Conver
         }
 
         return { message, conversation: nextConversation, trace };
+      });
+    },
+
+    async transferToAnalyst(input) {
+      const conversation = await requireOwned(input.conversationId, input.sessionEmployeeId);
+      if (!canTransitionConversation(conversation.status, 'WAITING_ANALYST')) {
+        throw new AgentPausedError('Cannot transfer from current status');
+      }
+      const summary = input.summary.trim();
+      if (!summary) {
+        throw new ConversationAccessDeniedError('transferSummary required');
+      }
+      const reqs = transferTransitionRequirements('WAITING_ANALYST');
+      if (reqs.requiresTransferSummary && !summary) {
+        throw new ConversationAccessDeniedError('transferSummary required');
+      }
+
+      return store.updateConversationStatus({
+        id: conversation.id,
+        status: 'WAITING_ANALYST',
+        transferSummary: summary,
+        transferReasonCode: input.reasonCode,
+        assignedAnalystId: reqs.assignedAnalystIdMustBeNull ? null : conversation.assignedAnalystId,
+        updatedAt: nowFn(),
       });
     },
   };

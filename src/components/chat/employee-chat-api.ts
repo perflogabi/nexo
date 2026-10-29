@@ -14,6 +14,19 @@ export type EmployeeApiMessage = {
   authorId: string | null;
   content: string;
   createdAt: string | Date;
+  structuredPayload?: unknown | null;
+};
+
+export type EmployeeApiTrace = {
+  id: string;
+  messageId: string;
+  understoodIntent: string;
+  actions: unknown;
+  rationale: string;
+  policyHits: unknown;
+  toolCalls: unknown;
+  modelConfidence: number | null;
+  presentedAssurance: string;
 };
 
 async function readError(res: Response): Promise<string> {
@@ -25,19 +38,36 @@ async function readError(res: Response): Promise<string> {
   }
 }
 
-/** Prefere fila/analista; senão WITH_AGENT mais recente; ignora CLOSED. */
+/**
+ * Conversa do /chat com o Nexo Assist.
+ * Prefere WITH_AGENT (agent responde). Ignora CLOSED.
+ * WAITING/WITH_ANALYST só se não houver sessão com agent.
+ */
 export function pickActiveConversation(
   conversations: EmployeeApiConversation[],
 ): EmployeeApiConversation | null {
   const open = conversations.filter((c) => c.status !== 'CLOSED');
-  const waiting = open.find((c) => c.status === 'WAITING_ANALYST');
-  if (waiting) return waiting;
-  const withAnalyst = open.find((c) => c.status === 'WITH_ANALYST');
-  if (withAnalyst) return withAnalyst;
   const withAgent = open
     .filter((c) => c.status === 'WITH_AGENT')
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-  return withAgent[0] ?? null;
+  if (withAgent[0]) return withAgent[0];
+
+  const withAnalyst = open.find((c) => c.status === 'WITH_ANALYST');
+  if (withAnalyst) return withAnalyst;
+
+  const waiting = open.find((c) => c.status === 'WAITING_ANALYST');
+  return waiting ?? null;
+}
+
+/** Sessão em que o agent ainda pode responder. */
+export function pickAgentChatConversation(
+  conversations: EmployeeApiConversation[],
+): EmployeeApiConversation | null {
+  return (
+    conversations
+      .filter((c) => c.status === 'WITH_AGENT')
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0] ?? null
+  );
 }
 
 export async function fetchMyConversations(): Promise<EmployeeApiConversation[]> {
@@ -45,6 +75,13 @@ export async function fetchMyConversations(): Promise<EmployeeApiConversation[]>
   if (!res.ok) throw new Error(await readError(res));
   const data = (await res.json()) as { conversations: EmployeeApiConversation[] };
   return data.conversations ?? [];
+}
+
+export async function createMyConversation(): Promise<EmployeeApiConversation> {
+  const res = await fetch('/api/conversations', { method: 'POST' });
+  if (!res.ok) throw new Error(await readError(res));
+  const data = (await res.json()) as { conversation: EmployeeApiConversation };
+  return data.conversation;
 }
 
 export async function fetchConversationMessages(
@@ -65,7 +102,10 @@ export async function sendEmployeeMessage(
   content: string,
 ): Promise<{
   message: EmployeeApiMessage;
+  agentMessage: EmployeeApiMessage | null;
   conversation: EmployeeApiConversation;
+  trace: EmployeeApiTrace | null;
+  confirmationToken: string | null;
 }> {
   const res = await fetch(`/api/conversations/${encodeURIComponent(id)}/messages`, {
     method: 'POST',
@@ -75,6 +115,16 @@ export async function sendEmployeeMessage(
   if (!res.ok) throw new Error(await readError(res));
   return (await res.json()) as {
     message: EmployeeApiMessage;
+    agentMessage: EmployeeApiMessage | null;
     conversation: EmployeeApiConversation;
+    trace: EmployeeApiTrace | null;
+    confirmationToken: string | null;
   };
+}
+
+export function actionLabelsFromTrace(trace: EmployeeApiTrace | null | undefined): string[] {
+  if (!trace || !Array.isArray(trace.actions)) return ['respondeu'];
+  return (trace.actions as Array<{ label?: string; code?: string }>)
+    .map((a) => a.label || a.code)
+    .filter((x): x is string => Boolean(x));
 }

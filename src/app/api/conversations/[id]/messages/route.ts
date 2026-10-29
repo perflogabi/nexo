@@ -5,7 +5,7 @@ import {
   ConversationNotFoundError,
   MessageLimitExceededError,
 } from '@/domain/errors';
-import { getConversationService } from '@/lib/services';
+import { getAgentOrchestrator, getConversationService } from '@/lib/services';
 import { readSession } from '@/lib/server-session';
 
 type Params = { params: Promise<{ id: string }> };
@@ -51,17 +51,32 @@ export async function POST(request: Request, { params }: Params) {
     );
   }
 
+  const agent = getAgentOrchestrator();
   try {
-    const result = await getConversationService().appendMessage({
+    agent.bindContext({
+      employeeId: session.employeeId,
       conversationId: id,
-      sessionEmployeeId: session.employeeId,
-      authorType: 'EMPLOYEE',
-      authorId: session.employeeId,
+    });
+    const result = await agent.orchestrator.runEmployeeTurn({
+      conversationId: id,
+      employeeId: session.employeeId,
       content,
     });
-    return NextResponse.json(result, { status: 201 });
+
+    return NextResponse.json(
+      {
+        message: result.employeeMessage,
+        agentMessage: result.agentMessage,
+        conversation: result.conversation,
+        trace: result.trace,
+        confirmationToken: result.confirmationToken ?? null,
+      },
+      { status: 201 },
+    );
   } catch (e) {
     return mapError(e);
+  } finally {
+    agent.clearContext();
   }
 }
 

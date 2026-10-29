@@ -1,0 +1,49 @@
+import { NextResponse } from 'next/server';
+import { ConfirmationInvalidError } from '@/domain/errors';
+import { getTicketService } from '@/lib/services';
+import { readSession } from '@/lib/server-session';
+
+type Params = { params: Promise<{ id: string }> };
+
+/**
+ * ConfirmationGate — confirma mutação de chamado com token.
+ */
+export async function POST(request: Request, { params }: Params) {
+  const session = await readSession();
+  if (!session || session.role !== 'EMPLOYEE') {
+    return NextResponse.json(
+      { error: { code: 'AUTH_ERROR', reason: 'FORBIDDEN' } },
+      { status: 403 },
+    );
+  }
+
+  const { id: conversationId } = await params;
+  const body = (await request.json()) as { token?: string };
+  const token = body.token?.trim() ?? '';
+  if (!token) {
+    return NextResponse.json(
+      { error: { code: 'VALIDATION_ERROR', message: 'token required' } },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const result = await getTicketService().confirmTicketMutation({
+      token,
+      sessionEmployeeId: session.employeeId,
+    });
+    return NextResponse.json({
+      conversationId,
+      ticket: result.ticket,
+      event: result.event,
+    });
+  } catch (e) {
+    if (e instanceof ConfirmationInvalidError) {
+      return NextResponse.json(
+        { error: { code: e.code, reason: e.reason, message: e.message } },
+        { status: 409 },
+      );
+    }
+    throw e;
+  }
+}

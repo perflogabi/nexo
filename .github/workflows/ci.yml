@@ -48,6 +48,7 @@ jobs:
         run: npm test
         env:
           CI: true
+          AGENT_LLM: mock
 
       - name: Prisma validate
         run: npx prisma validate
@@ -60,6 +61,7 @@ jobs:
         run: npm run build
         env:
           CI: true
+          AGENT_LLM: mock
           AUTH_SECRET: ci-build-auth-secret-not-real
           # Placeholders — build não conecta ao Neon
           DATABASE_URL: postgresql://user:pass@ep-example-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require

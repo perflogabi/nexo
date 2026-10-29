@@ -59,11 +59,12 @@ Usar **npm** (`package-lock.json`).
 
 (originalmente Fase 4; UI veio antes por decisão do time)
 
-1. [ ] Tools tipadas + PolicyEngine
-2. [ ] ConfirmationGate no fluxo do chat
-3. [ ] Pause em atendimento humano; transferência com justificativa
-4. [ ] DecisionTrace persistido
-5. [ ] Integração com LLM mockado no CI
+1. [x] Tools tipadas + PolicyEngine (domain tools + Mastra createTool)
+2. [x] ConfirmationGate no fluxo (`prepareTicketDraft` tool + `POST .../confirm`)
+3. [x] Pause em atendimento humano; transferência com justificativa
+4. [x] DecisionTrace persistido na reply AGENT
+5. [x] Integração com LLM mockado no CI (`AGENT_LLM=mock`; Gemini via `@google/genai` opcional)
+
 
 ## Fase 7 — Qualidade e deploy
 

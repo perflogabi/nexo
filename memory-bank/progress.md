@@ -24,6 +24,7 @@
 - [x] **Fase 3** Auth demo, middleware, ConversationService + limite 30
 - [x] **Fase 5** UI fiel ao protótipo: tokens, shells, login split, chat (draft/select/quick replies), perfil, console analista (rail+3 painéis); Storybook básico
 - [x] Console analista: mensagens/tickets reais + Assumir/Devolver/Encerrar (`CLOSED`); `/chat` com transcript da API + seed
+- [x] **Fase 6 (slice)** Agent: Mastra tools + mock/Gemini brain, orquestrador, DecisionTrace, pause, transfer, confirm route
 
 ## Verificações confirmadas
 
@@ -42,8 +43,8 @@
 
 - Commits sob controle do usuário; sem remote configurado nesta máquina.
 - Seed mínimo aplicado no Neon (`npm run db:seed`); idempotente.
-- Mastra / `@google/genai` **não** instalados (fase do agent).
-- Telas e auth de produto **não** implementadas.
+- Agent: mock no CI; Gemini real só com `GEMINI_API_KEY` + `AGENT_LLM=gemini` (ou default com chave).
+- Streaming SSE `/api/chat` ainda não (reply síncrona no POST messages).
 - Hipótese de pooling sob carga serverless real ainda aberta.
 
 ## Hipóteses ainda pendentes (não requisitos PRD)
@@ -57,7 +58,8 @@
 
 ## Próximo marco recomendado
 
-1. **Fase 6 (plano revisado)** — Agent Mastra + Gemini (mocks no CI), tools + DecisionTrace no chat real.
+1. Polir chat: carregar DecisionTrace no GET, quick replies → confirm, streaming SSE opcional.
+2. **Fase 7** — E2E Playwright, README, deploy Vercel/Neon.
 
 ## Log
 
@@ -94,3 +96,8 @@
 | 2026-10-28 | Analyst: lista/Assumir/Devolver ligados à API (transcript ainda demo) |
 | 2026-10-28 | Fontes: remove next/font/google (ETIMEDOUT); link CSS + fallbacks locais |
 | 2026-10-28 | Console + `/chat`: mensagens reais; tickets do owner; Encerrar → `CLOSED`; seed transcript `conv_ana_waiting` |
+| 2026-10-28 | **Fase 6** Agent Mastra tools + mock/Gemini (`@google/genai`); orquestrador; DecisionTrace; pause/transfer |
+| 2026-10-28 | Agent: Gemini preferido; fallback automático para mock em timeout/erro/resposta vazia |
+| 2026-10-28 | Gemini: default `gemini-flash-latest`, timeout 12s + UI otimista (API 503/lenta) |
+| 2026-10-28 | Seed console: Ana/Carla/Bruno/Diego/Elisa/Fábio/Gabriela + lista WITH_AGENT/CLOSED |
+| 2026-10-28 | Analyst: lista 1 conversa/pessoa (fila > /chat); UI Assumir do protótipo; Ana = Financeiro |
