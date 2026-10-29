@@ -25,6 +25,7 @@
 - [x] **Fase 5** UI fiel ao protótipo: tokens, shells, login split, chat (draft/select/quick replies), perfil, console analista (rail+3 painéis); Storybook básico
 - [x] Console analista: mensagens/tickets reais + Assumir/Devolver/Encerrar (`CLOSED`); `/chat` com transcript da API + seed
 - [x] **Fase 6 (slice)** Agent: Mastra tools + mock/Gemini brain, orquestrador, DecisionTrace, pause, transfer, confirm route
+- [x] **Fase 7 (slice)** Docker Compose + Dockerfile standalone para avaliadores (`docs/docker.md`)
 
 ## Verificações confirmadas
 
@@ -59,7 +60,7 @@
 ## Próximo marco recomendado
 
 1. Polir chat: carregar DecisionTrace no GET, quick replies → confirm, streaming SSE opcional.
-2. **Fase 7** — E2E Playwright, README, deploy Vercel/Neon.
+2. **Fase 7** — rate limit/chave Gemini → E2E → README → deploy Vercel/Neon (Docker avaliadores: feito).
 
 ## Log
 
@@ -101,3 +102,4 @@
 | 2026-10-28 | Gemini: default `gemini-flash-latest`, timeout 12s + UI otimista (API 503/lenta) |
 | 2026-10-28 | Seed console: Ana/Carla/Bruno/Diego/Elisa/Fábio/Gabriela + lista WITH_AGENT/CLOSED |
 | 2026-10-28 | Analyst: lista 1 conversa/pessoa (fila > /chat); UI Assumir do protótipo; Ana = Financeiro |
+| 2026-10-29 | Docker: Compose app+Postgres, entrypoint migrate/seed, `docs/docker.md` |

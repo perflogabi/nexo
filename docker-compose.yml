@@ -1,0 +1,48 @@
+# Ambiente local completo para avaliadores (app + Postgres).
+# Neon continua o banco oficial em produção — ver docs/database.md e docs/docker.md.
+#
+#   docker compose up --build
+#   abrir http://localhost:3000
+#
+# Contas seed (qualquer senha):
+#   ana.souza@nexo.com.br · analista@nexo.local
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: nexo
+      POSTGRES_PASSWORD: nexo
+      POSTGRES_DB: nexo
+    ports:
+      - '5432:5432'
+    volumes:
+      - nexo_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U nexo -d nexo']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      # Host: contêiner. Se 3000 estiver ocupada: APP_PORT=3001 docker compose up --build
+      - '${APP_PORT:-3000}:3000'
+    environment:
+      DATABASE_URL: postgresql://nexo:nexo@db:5432/nexo?schema=public
+      DIRECT_URL: postgresql://nexo:nexo@db:5432/nexo?schema=public
+      AUTH_SECRET: docker-dev-auth-secret-change-me
+      AGENT_LLM: mock
+      # Opcional: passe GEMINI_API_KEY no shell ou em .env ao lado deste arquivo
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-flash-lite-latest}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  nexo_pg:

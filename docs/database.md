@@ -1,7 +1,9 @@
 # Banco de dados — Neon + Prisma
 
 O Nexo Assist usa **Neon** (PostgreSQL gerenciado) como banco oficial e **Prisma** (v6) para schema, client e migrations.  
-**Não** é necessário instalar ou manter PostgreSQL local.
+**Não** é necessário instalar ou manter PostgreSQL local no dia a dia.
+
+Para avaliadores que preferem **tudo via Docker** (app + Postgres 16 local, sem conta Neon), ver **`docs/docker.md`**. Isso é caminho opcional; Neon permanece o banco oficial de produção.
 
 ## Escolha técnica inicial (pooling)
 
