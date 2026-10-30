@@ -132,7 +132,7 @@ Fluxo (serviço, **mesma transação** — `data-model.md` §3.8):
 
 Token: único, expirável (TTL **H**), one-shot, anti-concorrência pelo `UPDATE` condicional.
 
-Tools: `prepareTicketDraft` (staging) → UI Confirmar → `confirmTicketMutation(token)`.
+Tools: `prepareTicketDraft` (staging, tool LLM) → UI Confirmar → `POST .../confirm` → `confirmTicketMutation(token, expectedConversationId)` no serviço. Confirm **não** é tool do LLM.
 
 ---
 
@@ -224,7 +224,7 @@ mensagem do funcionário
 | `classifyPriority` | domain | Não |
 | `findDuplicateOrReopenCandidate` | domain + read | Não |
 | `prepareTicketDraft` | staging PendingConfirmation | Não |
-| `confirmTicketMutation` | write na mesma tx do consume | **Sim** (token) |
+| `confirmTicketMutation` (API/UI only) | write na mesma tx do consume | **Sim** (token + conversationId da URL) |
 | `requestAnalystTransfer` | status + summary | Pedido pode usar quick reply na UI |
 | `redirectOutOfScope` | reply | Não |
 

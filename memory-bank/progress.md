@@ -27,12 +27,14 @@
 - [x] **Fase 6 (slice)** Agent: Mastra tools + mock/Gemini brain, orquestrador, DecisionTrace, pause, transfer, confirm route
 - [x] **Fase 7 (slice)** Docker Compose + Dockerfile standalone para avaliadores (`docs/docker.md`)
 - [x] **Fase 7 (slice)** Rate limit login/agent (429) + redação de segredos / chave Gemini só no server
+- [x] ConfirmationGate end-to-end: `confirmTicketMutation` **fora** das tools LLM; `TicketDraftCard` + `POST .../confirm`; token no `structuredPayload`
+- [x] Contexto das tools do agent via `AsyncLocalStorage` (sem singleton global por request)
 
 ## Verificações confirmadas
 
 | Comando / check | Resultado |
 |-----------------|-----------|
-| `npm run lint` / `typecheck` / `test` / `build` | OK (2026-10-28: **100** testes; app build OK) |
+| `npm run lint` / `typecheck` / `test` / `build` | OK (2026-10-29: lint/typecheck; **153** testes; build OK) |
 | `npm run format:check` | OK |
 | `npm run build-storybook` | OK após `overrides.webpack=5.101.2` (Next 15.5 × SB 8 webpack `tap`) |
 | `npm run db:seed` | OK (Neon; employees/artigos/tickets demo) |
@@ -47,6 +49,7 @@
 - Seed mínimo aplicado no Neon (`npm run db:seed`); idempotente.
 - Agent: mock no CI; Gemini real só com `GEMINI_API_KEY` + `AGENT_LLM=gemini` (ou default com chave).
 - Streaming SSE `/api/chat` ainda não (reply síncrona no POST messages).
+- Poll leve 5s funcionário↔analista (`useChatPoll`) enquanto WAITING/WITH_ANALYST (sem WebSocket; ok Vercel).
 - Hipótese de pooling sob carga serverless real ainda aberta.
 
 ## Hipóteses ainda pendentes (não requisitos PRD)
@@ -60,13 +63,14 @@
 
 ## Próximo marco recomendado
 
-1. Polir chat: carregar DecisionTrace no GET, quick replies → confirm, streaming SSE opcional.
-2. **Fase 7** — E2E → README → deploy Vercel/Neon (Docker + rate limit/chave Gemini: feitos).
+1. **Fase 7** — E2E Playwright → README → deploy Vercel/Neon.
+2. Polir chat: carregar DecisionTrace no GET; streaming SSE opcional.
 
 ## Log
 
 | Data | Nota |
 |------|------|
+| 2026-10-29 | Críticos: confirm só via UI; ALS tool context; TicketDraftCard + conversationId no confirm |
 | 2026-10-27 | Planejamento + auditorias documentais |
 | 2026-10-27 | Higiene DecisionTrace / agentPaused |
 | 2026-10-27 | **Bootstrap** Next/Prisma/Vitest/Storybook/CI |
