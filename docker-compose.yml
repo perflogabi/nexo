@@ -35,9 +35,12 @@ services:
       DATABASE_URL: postgresql://nexo:nexo@db:5432/nexo?schema=public
       DIRECT_URL: postgresql://nexo:nexo@db:5432/nexo?schema=public
       AUTH_SECRET: docker-dev-auth-secret-change-me
-      AGENT_LLM: mock
-      # Opcional: passe GEMINI_API_KEY no shell ou em .env ao lado deste arquivo
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      # Demo autorizada a usar mock (não é produção Vercel).
+      NEXO_ENV: demo
+      AGENT_LLM: ${AGENT_LLM:-mock}
+      # Não interpolar GEMINI_API_KEY do `.env` do host (evita injetar segredo no demo mock).
+      # Gemini opt-in: AGENT_LLM=gemini NEXO_DOCKER_GEMINI_API_KEY=<chave> docker compose up --build
+      GEMINI_API_KEY: ${NEXO_DOCKER_GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-flash-lite-latest}
     depends_on:
       db:

@@ -1,0 +1,30 @@
+# Postgres efêmero exclusivo para E2E / integração.
+# NÃO usar o compose principal (volume nexo_pg) nem Neon.
+#
+#   npm run db:e2e:up
+#   # depois: scripts com DATABASE_URL apontando para nexo_e2e@127.0.0.1:5433
+#   npm run db:e2e:down
+#
+# Sem volume nomeado: ao remover o container os dados somem.
+# Scripts NÃO executam docker compose down -v.
+
+name: nexo-e2e
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: nexo-e2e-db
+    environment:
+      POSTGRES_USER: nexo_e2e
+      POSTGRES_PASSWORD: nexo_e2e
+      POSTGRES_DB: nexo_e2e
+    ports:
+      - '5433:5432'
+    # Dados só em memória — evita volume anônimo reaproveitado com user errado.
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U nexo_e2e -d nexo_e2e']
+      interval: 3s
+      timeout: 5s
+      retries: 20

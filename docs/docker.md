@@ -43,15 +43,17 @@ Outros funcionários do seed: `carla.mendes@nexo.com.br`, `bruno.tavares@nexo.co
 
 ## Agent / Gemini
 
-Por padrão o Compose usa `AGENT_LLM=mock` (sem chave).
+Por padrão o Compose usa `NEXO_ENV=demo` e `AGENT_LLM=mock` (ambiente de demonstração autorizado — **não** é produção Vercel).
 
-Para Gemini real:
+Para Gemini real no compose (chave **não** é lida do `.env` do host — use o nome abaixo):
 
 ```bash
-GEMINI_API_KEY=sua-chave docker compose up --build
+AGENT_LLM=gemini NEXO_DOCKER_GEMINI_API_KEY=sua-chave docker compose up --build
 ```
 
 (opcional) `GEMINI_MODEL=gemini-flash-lite-latest`
+
+> E2E usa `docker-compose.e2e.yml` (Postgres `nexo_e2e` na porta **5433**), separado deste compose. Ver README § E2E.
 
 ## Parar / limpar
 
