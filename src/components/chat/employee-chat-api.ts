@@ -42,8 +42,8 @@ async function readError(res: Response): Promise<string> {
 
 /**
  * Conversa do /chat com o Nexo Assist.
- * Prefere WITH_AGENT (agent responde). Ignora CLOSED.
- * WAITING/WITH_ANALYST só se não houver sessão com agent.
+ * Prefere WITH_AGENT → WITH_ANALYST → WAITING_ANALYST.
+ * Se só houver CLOSED, devolve a mais recente (indicação de encerramento).
  */
 export function pickActiveConversation(
   conversations: EmployeeApiConversation[],
@@ -54,11 +54,20 @@ export function pickActiveConversation(
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   if (withAgent[0]) return withAgent[0];
 
-  const withAnalyst = open.find((c) => c.status === 'WITH_ANALYST');
-  if (withAnalyst) return withAnalyst;
+  const withAnalyst = open
+    .filter((c) => c.status === 'WITH_ANALYST')
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  if (withAnalyst[0]) return withAnalyst[0];
 
-  const waiting = open.find((c) => c.status === 'WAITING_ANALYST');
-  return waiting ?? null;
+  const waiting = open
+    .filter((c) => c.status === 'WAITING_ANALYST')
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  if (waiting[0]) return waiting[0];
+
+  const closed = conversations
+    .filter((c) => c.status === 'CLOSED')
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  return closed[0] ?? null;
 }
 
 /** Sessão em que o agent ainda pode responder. */

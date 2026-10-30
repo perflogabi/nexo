@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { AgentLlmUnavailableError } from '@/agent/create-brain';
 import {
   AgentPausedError,
   ConversationAccessDeniedError,
@@ -109,6 +110,9 @@ function mapError(e: unknown) {
   }
   if (e instanceof ConversationNotFoundError) {
     return NextResponse.json({ error: { code: e.code, message: e.message } }, { status: 404 });
+  }
+  if (e instanceof AgentLlmUnavailableError) {
+    return NextResponse.json({ error: { code: e.code, message: e.message } }, { status: 503 });
   }
   throw e;
 }

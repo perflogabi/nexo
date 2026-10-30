@@ -40,6 +40,7 @@ import {
   type EmployeeApiTrace,
 } from '@/components/chat/employee-chat-api';
 import { TicketDetailCard } from '@/components/chat/TicketDetailCard';
+import { ConversationClosedNotice } from '@/components/chat/ConversationClosedNotice';
 import { TicketDraftCard } from '@/components/chat/TicketDraftCard';
 import { TicketSelectList } from '@/components/chat/TicketSelectList';
 
@@ -257,12 +258,19 @@ export function EmployeeChatThread({ messageCount = 16, demo = false }: Props) {
 
   const load = useCallback(async () => {
     const list = await fetchMyConversations();
-    // Mantém WAITING/WITH_ANALYST (não cria sessão nova — senão some o transcript no reload).
+    // Mantém WAITING/WITH_ANALYST/CLOSED recente — não cria sessão nova no reload.
     let active = pickActiveConversation(list);
     if (!active) {
       active = await createMyConversation();
     }
     const detail = await fetchConversationMessages(active.id);
+    applyConversationDetail(detail);
+  }, [applyConversationDetail]);
+
+  const startNewConversation = useCallback(async () => {
+    setError(null);
+    const created = await createMyConversation();
+    const detail = await fetchConversationMessages(created.id);
     applyConversationDetail(detail);
   }, [applyConversationDetail]);
 
@@ -451,6 +459,20 @@ export function EmployeeChatThread({ messageCount = 16, demo = false }: Props) {
               >
                 Nexo Assist está respondendo…
               </p>
+            ) : null}
+            {!showDemo && status === 'CLOSED' ? (
+              <>
+                <ConversationClosedNotice />
+                <div className="flex justify-center pt-2">
+                  <button
+                    type="button"
+                    className="text-[13px] font-medium text-[var(--color-primary)] underline-offset-2 hover:underline"
+                    onClick={() => void startNewConversation()}
+                  >
+                    Iniciar nova conversa
+                  </button>
+                </div>
+              </>
             ) : null}
           </div>
         </div>

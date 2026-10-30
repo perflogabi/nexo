@@ -97,4 +97,22 @@ describe('pickActiveConversation', () => {
     ]);
     expect(picked?.id).toBe('new');
   });
+
+  it('se só CLOSED, escolhe a mais recente (indicação de encerramento)', () => {
+    const picked = pickActiveConversation([
+      {
+        id: 'old-closed',
+        status: 'CLOSED',
+        messageCount: 1,
+        updatedAt: '2026-10-20T12:00:00.000Z',
+      },
+      {
+        id: 'new-closed',
+        status: 'CLOSED',
+        messageCount: 4,
+        updatedAt: '2026-10-29T12:00:00.000Z',
+      },
+    ]);
+    expect(picked?.id).toBe('new-closed');
+  });
 });
