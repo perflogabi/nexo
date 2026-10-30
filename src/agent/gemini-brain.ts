@@ -6,23 +6,60 @@
 import { GoogleGenAI, type FunctionDeclaration, type Content } from '@google/genai';
 import { assertGeminiApiKey } from '@/lib/gemini-api-key';
 import { safeErrorMessage } from '@/lib/redact-secrets';
-import { mapTicketToDetailPayload, mapTicketsToSelectPayload } from '@/agent/chat-ui-payload';
+import {
+  ADD_INFO_REPLY,
+  ANALYST_TRANSFER_REPLY,
+  DISMISS_REPLY,
+  isAddInfoRequest,
+  isAnalystRequest,
+  isPoliteDismiss,
+} from '@/agent/chat-followups';
+import {
+  mapTicketDraftPayload,
+  mapTicketToDetailPayload,
+  mapTicketsToSelectPayload,
+} from '@/agent/chat-ui-payload';
 import { NEXO_AGENT_INSTRUCTIONS } from '@/agent/instructions';
 import type { AgentBrain, AgentReplyDraft, AgentToolCallTrace } from '@/agent/types';
 import type { AgentToolContext } from '@/agent/tools/tool-context';
 import {
-  toolConfirmTicketMutation,
   toolFindDuplicateOrReopen,
   toolGetTicket,
   toolListMyTickets,
   toolPrepareTicketDraft,
   toolSearchHelpCenter,
 } from '@/agent/tools/execute-tools';
-import type { Category, Priority, TicketType, TransferReasonCode } from '@/domain/types';
+import {
+  openishTickets,
+  resolveTicketForDetail,
+  shouldShowDetailInsteadOfList,
+} from '@/agent/ticket-ui-resolution';
+import { normalizeCategory, normalizeTicketType } from '@/domain/ticket-draft-normalize';
+import { normalizeTransferReasonCode } from '@/domain/transfer-reason-normalize';
+import type { PendingOperation } from '@/domain/types';
+import type { TicketRecord } from '@/services/tickets/types';
 
-function ticketNumberInText(text: string): string | null {
-  const m = text.match(/\b((?:INC|REQ)-\d+)\b/i);
-  return m?.[1]?.toUpperCase() ?? null;
+function detailUi(match: TicketRecord): {
+  text: string;
+  structuredPayload: unknown;
+  actions: AgentReplyDraft['decision']['actions'];
+} {
+  const overdue =
+    match.slaDeadlineAt.getTime() < Date.now() &&
+    (match.status === 'OPEN' || match.status === 'WAITING_ANALYST');
+  return {
+    text: overdue
+      ? 'Está sem atualização acima do prazo. Quer que eu chame um analista?'
+      : 'Segue o detalhe do chamado. Precisa de mais alguma coisa?',
+    structuredPayload: {
+      ...mapTicketToDetailPayload(match),
+      quickReplies: ['Falar com um analista', 'Adicionar informação', 'Não, obrigado'],
+    },
+    actions: [
+      { code: 'get_ticket', label: `consultou o ${match.number}` },
+      { code: 'sla', label: 'calculou o prazo' },
+    ],
+  };
 }
 
 /**
@@ -96,38 +133,37 @@ const FUNCTION_DECLARATIONS: FunctionDeclaration[] = [
   },
   {
     name: 'prepareTicketDraft',
-    description: 'Staging ConfirmationGate',
+    description:
+      'Staging ConfirmationGate — só prepara rascunho. NÃO confirme; a UI do funcionário confirma. type deve ser INC ou REQ; category ACESSO|REDE_VPN|HARDWARE|SOFTWARE|EMAIL|OUTROS; priority CRITICAL|HIGH|MEDIUM|LOW.',
     parametersJsonSchema: {
       type: 'object',
       properties: {
-        operation: { type: 'string' },
-        type: { type: 'string' },
+        operation: { type: 'string', description: 'CREATE | UPDATE | REOPEN' },
+        type: { type: 'string', description: 'INC ou REQ (não use INCIDENT/REQUEST)' },
         title: { type: 'string' },
         description: { type: 'string' },
-        category: { type: 'string' },
-        priority: { type: 'string' },
+        category: {
+          type: 'string',
+          description: 'ACESSO | REDE_VPN | HARDWARE | SOFTWARE | EMAIL | OUTROS',
+        },
+        priority: { type: 'string', description: 'CRITICAL | HIGH | MEDIUM | LOW' },
         ticketId: { type: 'string' },
       },
       required: ['operation', 'type', 'title', 'description', 'category', 'priority'],
     },
   },
   {
-    name: 'confirmTicketMutation',
-    description: 'Confirma mutação com token',
-    parametersJsonSchema: {
-      type: 'object',
-      properties: { token: { type: 'string' } },
-      required: ['token'],
-    },
-  },
-  {
     name: 'requestAnalystTransfer',
-    description: 'Transfere para analista',
+    description:
+      'Transfere para analista. reasonCode DEVE ser exatamente um de: USER_REQUEST | CRITICAL | OVERDUE | LOW_CONFIDENCE',
     parametersJsonSchema: {
       type: 'object',
       properties: {
         summary: { type: 'string' },
-        reasonCode: { type: 'string' },
+        reasonCode: {
+          type: 'string',
+          description: 'USER_REQUEST | CRITICAL | OVERDUE | LOW_CONFIDENCE',
+        },
       },
       required: ['summary', 'reasonCode'],
     },
@@ -143,6 +179,7 @@ async function dispatchTool(
   trace: AgentToolCallTrace;
   transfer?: AgentReplyDraft['transfer'];
   token?: string;
+  draftPayload?: AgentReplyDraft['structuredPayload'];
 }> {
   switch (name) {
     case 'searchHelpCenter': {
@@ -160,32 +197,68 @@ async function dispatchTool(
     case 'findDuplicateOrReopenCandidate': {
       const r = await toolFindDuplicateOrReopen(ctx, {
         title: String(args.title ?? ''),
-        category: args.category as Category,
-        type: args.type as TicketType | undefined,
+        category: normalizeCategory(args.category),
+        type: args.type != null ? normalizeTicketType(args.type) : undefined,
       });
       return { result: r, trace: r.trace };
     }
     case 'prepareTicketDraft': {
+      const operation = args.operation as PendingOperation;
       const r = await toolPrepareTicketDraft(ctx, {
-        operation: args.operation as 'CREATE' | 'UPDATE' | 'REOPEN',
-        type: args.type as TicketType,
+        operation,
+        type: String(args.type ?? 'INC'),
         title: String(args.title ?? ''),
         description: String(args.description ?? ''),
-        category: args.category as Category,
-        priority: args.priority as Priority,
+        category: String(args.category ?? 'OUTROS'),
+        priority: String(args.priority ?? 'MEDIUM'),
         ticketId: args.ticketId ? String(args.ticketId) : undefined,
       });
-      return { result: r, trace: r.trace, token: r.data?.token };
+      if (!r.ok || !r.data) {
+        return { result: r, trace: r.trace };
+      }
+      const draftPayload = mapTicketDraftPayload({
+        operation,
+        type: r.data.type,
+        title: r.data.title,
+        description: r.data.description,
+        category: r.data.category,
+        priority: r.data.priority,
+        confirmationToken: r.data.token,
+        expiresAt: r.data.expiresAt,
+      });
+      // Não devolver o token cru ao modelo — só à UI via structuredPayload / confirmationToken.
+      return {
+        result: {
+          ...r,
+          data: {
+            operation: r.data.operation,
+            type: r.data.type,
+            category: r.data.category,
+            priority: r.data.priority,
+            expiresAt: r.data.expiresAt,
+            pendingConfirmation: true,
+          },
+        },
+        trace: r.trace,
+        token: r.data.token,
+        draftPayload,
+      };
     }
     case 'confirmTicketMutation': {
-      const r = await toolConfirmTicketMutation(ctx, String(args.token ?? ''));
-      return { result: r, trace: r.trace };
+      return {
+        result: {
+          ok: false,
+          error:
+            'confirmTicketMutation não está disponível ao agent. Peça ao funcionário para clicar em Confirmar na UI.',
+        },
+        trace: { name, ok: false, summary: 'ui_only_confirm' },
+      };
     }
     case 'requestAnalystTransfer': {
       const summary = String(args.summary ?? 'Transferência solicitada');
-      const reasonCode = (args.reasonCode as TransferReasonCode) || 'USER_REQUEST';
+      const reasonCode = normalizeTransferReasonCode(args.reasonCode);
       return {
-        result: { ok: true, transfer: true },
+        result: { ok: true, transfer: true, reasonCode },
         trace: { name, ok: true, summary: reasonCode },
         transfer: { summary, reasonCode },
       };
@@ -235,11 +308,60 @@ export function createGeminiAgentBrain(getContext: () => AgentToolContext): Agen
 
   return {
     async generateReply(input): Promise<AgentReplyDraft> {
+      if (isPoliteDismiss(input.employeeMessage)) {
+        return {
+          content: DISMISS_REPLY,
+          decision: {
+            understoodIntent: 'dismiss',
+            actions: [{ code: 'reply', label: 'encerrou o assunto' }],
+            rationale: 'Quick reply / recusa educada — sem reabrir card.',
+            policyHits: [],
+            toolCalls: [],
+            modelConfidence: 0.95,
+            presentedAssurance: 'HIGH',
+          },
+        };
+      }
+      if (isAddInfoRequest(input.employeeMessage)) {
+        return {
+          content: ADD_INFO_REPLY,
+          decision: {
+            understoodIntent: 'add_info',
+            actions: [{ code: 'reply', label: 'pediu mais detalhes' }],
+            rationale: 'Quick reply Adicionar informação.',
+            policyHits: [],
+            toolCalls: [],
+            modelConfidence: 0.9,
+            presentedAssurance: 'HIGH',
+          },
+        };
+      }
+      if (isAnalystRequest(input.employeeMessage)) {
+        return {
+          content: ANALYST_TRANSFER_REPLY,
+          decision: {
+            understoodIntent: 'request_analyst',
+            actions: [{ code: 'transfer', label: 'transferiu para analista' }],
+            rationale:
+              'Pedido explícito / quick reply — USER_REQUEST (sem LLM inventar reasonCode).',
+            policyHits: ['USER_REQUEST'],
+            toolCalls: [],
+            modelConfidence: 0.95,
+            presentedAssurance: 'HIGH',
+          },
+          transfer: {
+            summary: `Funcionário pediu analista: "${input.employeeMessage.slice(0, 180)}"`,
+            reasonCode: 'USER_REQUEST',
+          },
+        };
+      }
+
       const ctx = getContext();
       const traces: AgentToolCallTrace[] = [];
       const actions: AgentReplyDraft['decision']['actions'] = [];
       let transfer: AgentReplyDraft['transfer'] | undefined;
       let confirmationToken: string | undefined;
+      let draftStructuredPayload: unknown | undefined;
 
       const contents: Content[] = [
         ...input.recentMessages.slice(-12).map((m): Content => ({
@@ -273,66 +395,42 @@ export function createGeminiAgentBrain(getContext: () => AgentToolContext): Agen
             actions.push({ code: 'reply', label: 'respondeu' });
           }
 
-          let structuredPayload: unknown;
-          let intent = transfer ? 'transfer' : 'gemini_reply';
+          let structuredPayload: unknown = draftStructuredPayload;
+          let intent = transfer
+            ? 'transfer'
+            : draftStructuredPayload
+              ? 'ticket_draft'
+              : 'gemini_reply';
 
-          // Seleção de chamado (INC-0001 · …) → card de detalhe, nunca repetir a lista.
-          const selectedNumber = ticketNumberInText(input.employeeMessage);
-          if (selectedNumber && input.employeeMessage.includes('·')) {
+          // Preferir detalhe (número, título, único chamado) — não relistar.
+          if (!structuredPayload) {
             const tickets = await ctx.tickets.listMyTickets(ctx.employeeId);
-            const match = tickets.find((t) => t.number.toUpperCase() === selectedNumber);
-            if (match) {
-              structuredPayload = {
-                ...mapTicketToDetailPayload(match),
-                quickReplies: ['Falar com um analista', 'Adicionar informação', 'Não, obrigado'],
-              };
-              text =
-                match.slaDeadlineAt.getTime() < Date.now() &&
-                (match.status === 'OPEN' || match.status === 'WAITING_ANALYST')
-                  ? 'Está sem atualização acima do prazo. Quer que eu chame um analista?'
-                  : 'Segue o detalhe do chamado. Precisa de mais alguma coisa?';
+            const detailMatch =
+              resolveTicketForDetail(tickets, input.employeeMessage) ??
+              (traces.some((t) => t.name === 'listMyTickets' && t.ok)
+                ? shouldShowDetailInsteadOfList(tickets)
+                : null);
+            if (detailMatch) {
+              const ui = detailUi(detailMatch);
+              structuredPayload = ui.structuredPayload;
+              text = ui.text;
               intent = 'ticket_detail';
               actions.length = 0;
-              actions.push(
-                { code: 'get_ticket', label: `consultou o ${selectedNumber}` },
-                { code: 'sla', label: 'calculou o prazo' },
-              );
-            }
-          } else {
-            const listedTickets = traces.some((t) => t.name === 'listMyTickets' && t.ok);
-            const gotTicket = traces.some((t) => t.name === 'getTicket' && t.ok);
-            if (gotTicket && selectedNumber) {
-              const tickets = await ctx.tickets.listMyTickets(ctx.employeeId);
-              const match = tickets.find((t) => t.number.toUpperCase() === selectedNumber);
-              if (match) {
-                structuredPayload = {
-                  ...mapTicketToDetailPayload(match),
-                  quickReplies: ['Falar com um analista', 'Adicionar informação', 'Não, obrigado'],
-                };
-                text = 'Segue o detalhe do chamado. Quer que eu chame um analista?';
-                intent = 'ticket_detail';
-                actions.length = 0;
-                actions.push(
-                  { code: 'get_ticket', label: `consultou o ${selectedNumber}` },
-                  { code: 'sla', label: 'calculou o prazo' },
-                );
-              }
-            } else if (listedTickets) {
-              const tickets = await ctx.tickets.listMyTickets(ctx.employeeId);
-              const forList = tickets
-                .filter(
-                  (t) =>
-                    t.status === 'OPEN' ||
-                    t.status === 'WAITING_ANALYST' ||
-                    t.status === 'IN_PROGRESS' ||
-                    t.status === 'APPROVED',
-                )
-                .slice(0, 5);
-              const use = forList.length > 0 ? forList : tickets.slice(0, 5);
+              actions.push(...ui.actions);
+            } else if (traces.some((t) => t.name === 'listMyTickets' && t.ok)) {
+              const use = openishTickets(tickets);
               if (use.length > 0) {
                 structuredPayload = mapTicketsToSelectPayload(use);
                 text = `Você tem ${use.length} chamado(s). Sobre qual deles quer saber?`;
                 intent = 'list_tickets';
+                if (
+                  !actions.some((a) => a.code === 'list_tickets' || a.label.includes('chamado'))
+                ) {
+                  actions.unshift({ code: 'list_tickets', label: 'consultou seus chamados' });
+                }
+              } else {
+                text = 'Você não tem chamados no momento. Quer abrir um ou falar com um analista?';
+                intent = 'list_tickets_empty';
                 if (
                   !actions.some((a) => a.code === 'list_tickets' || a.label.includes('chamado'))
                 ) {
@@ -370,6 +468,7 @@ export function createGeminiAgentBrain(getContext: () => AgentToolContext): Agen
           traces.push(dispatched.trace);
           if (dispatched.transfer) transfer = dispatched.transfer;
           if (dispatched.token) confirmationToken = dispatched.token;
+          if (dispatched.draftPayload) draftStructuredPayload = dispatched.draftPayload;
           actions.push({ code: name, label: dispatched.trace.summary });
           fnResponseParts!.push({
             functionResponse: {
