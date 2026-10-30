@@ -34,7 +34,7 @@ Fonte do modelo de dados: `data-model.md` (incluindo pause derivado, confirmaç�
 | Pacotes | npm + `package-lock.json` | Decisão de projeto |
 | Testes | Vitest, RTL, Playwright + Storybook | Decisão de projeto |
 | CI | GitHub Actions | Decisão de projeto |
-| Deploy | Vercel + Neon (pooling em produção ainda a validar com credenciais reais) | Diferencial PRD |
+| Deploy | Vercel + Neon (**previsto**; ainda não publicado — diferencial PRD) | Diferencial PRD |
 
 ---
 
@@ -257,8 +257,24 @@ mensagem do funcionário
 ## LLM
 
 - Mastra + **Gemini** (`@google/genai`); domain desacoplado do SDK
-- `GEMINI_API_KEY` só em env; CI/testes com mocks — sem chamada real obrigatória
-- Justificar no README
+- `GEMINI_API_KEY` só em env; CI/testes/demo/E2E com `AGENT_LLM=mock` — sem chamada real obrigatória
+- Justificar no README (escolha Gemini: SDK TS, custo/latência, Mastra tools)
+
+### Resolução de modo (`src/agent/llm-mode.ts`) — decisão 2026-10-30
+
+| Runtime (`NEXO_ENV`) | Comportamento |
+|----------------------|---------------|
+| `production` | Apenas `gemini`; `AGENT_LLM=mock` **lança erro**; exige `GEMINI_API_KEY`; **sem** fallback silencioso Gemini→mock |
+| `development` \| `demo` \| `test` \| `e2e` | `mock` permitido (`AGENT_LLM=mock` ou default sem chave); `gemini` se explícito + chave |
+| Cookie `Secure` | Só se `NEXO_ENV=production` (E2E/demo em http) |
+
+Docker demo: não interpolar `GEMINI_API_KEY` do `.env` do host; opt-in `NEXO_DOCKER_GEMINI_API_KEY`.
+
+### E2E / qualidade (harness)
+
+- Postgres isolado `nexo_e2e` (Compose `:5433` / service GHA); guardrail bloqueia Neon
+- Playwright sobe `node .next/standalone/server.js` **após** copiar `.next/static` → standalone (espelha Dockerfile)
+- Integração Vitest (`test:integration`) no mesmo banco efêmero
 
 ---
 

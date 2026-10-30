@@ -62,4 +62,4 @@ Contrato de scripts previsto no `package.json` (criar no bootstrap):
 
 ## Estado atual (atualizar em `progress.md`)
 
-Planejamento **aprovado**. Bootstrap Next.js **concluído**. Repositório Git ainda pode não existir — `git init`/commit/push só com autorização. Próximo marco: domínio + Ticket Service (não UI completa).
+Produto (chat + agent + console + E2E/CI + Docker demo) **implementado**. README alinhado aos entregáveis do PRD. Deploy Vercel ainda pendente. Commit/push só com autorização explícita do usuário.

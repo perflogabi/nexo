@@ -191,15 +191,17 @@ Fuso e feriados não estão no PRD. Esclarecimento externo **só** se a empresa 
 |---------|----------|--------|
 | Framework agent | **Mastra** | Explícito (preferência) |
 | Provider MVP | **Google Gemini** via `@google/genai` (decisão de projeto aprovada; substitui a hipótese anterior OpenAI) | Técnica |
-| Por quê | Alinhamento à decisão do time; PRD aceita qualquer provider; Mastra + SDK oficial; mocks no CI | Técnica |
+| Por quê | SDK TS oficial, custo/latência, Mastra tools; PRD aceita qualquer provider; mocks no CI/demo/E2E | Técnica |
 | Alternativa | Troca via config sem acoplar domain ao SDK | Técnica |
-| Segredos | `GEMINI_API_KEY` (ou nome documentado no `.env.example`) só em env — nunca no repo | Explícito (chaves fora do código) |
+| Segredos | `GEMINI_API_KEY` só em env — nunca no repo | Explícito (chaves fora do código) |
+| Produção | `NEXO_ENV=production` + Gemini; **mock rejeitado**; sem fallback silencioso Gemini→mock | Técnica |
+| Demo Docker | `NEXO_ENV=demo` + mock; chave só via `NEXO_DOCKER_GEMINI_API_KEY` (não interpolar `.env` do host) | Técnica |
 
-Critérios: tools/structured output, streaming, custo, DX, rate limits — Gemini é escolha do projeto, **não** exigência do PRD.
+Critérios: tools/structured output, streaming, custo, DX, rate limits — Gemini é escolha do projeto, **não** exigência do PRD. Justificativa no README.
 
 ### Pendência
 
-Validar integração Mastra ↔ Gemini na fase do agent. CI permanece sem chamada real.
+Nenhuma bloqueante na integração agent. CI permanece sem chamada real. Streaming SSE e polimento de UI do DecisionTrace: backlog.
 
 ---
 
@@ -215,15 +217,15 @@ Validar integração Mastra ↔ Gemini na fase do agent. CI permanece sem chamad
 
 | Aspecto | Conteúdo | Classe |
 |---------|----------|--------|
-| Engine | PostgreSQL + Prisma (já adotado no planejamento) | Técnica |
-| Deploy app | Vercel (candidata) | Técnica |
-| DB gerenciado | **Neon** oficial (config Prisma preparada; smoke com credenciais reais pendente) | Técnica |
-| Cuidados | Serverless: `DATABASE_URL` pooled + `DIRECT_URL` direct (Prisma 6); evitar esgotar conexões; env distintas; migrate só com autorização; secrets só em env — `docs/database.md` | Técnica |
-| Status | Integração **não** testada de ponta a ponta ainda | Fato |
+| Engine | PostgreSQL + Prisma | Técnica |
+| Deploy app | Vercel (previsto; **ainda não publicado**) | Técnica |
+| DB gerenciado | **Neon** oficial (migration + seed aplicados em ambiente de desenvolvimento do autor) | Técnica |
+| Demo / E2E | Compose `nexo` (demo) e `nexo_e2e` (testes); guardrail impede Neon no E2E | Técnica |
+| Cuidados | `DATABASE_URL` pooled + `DIRECT_URL` direct; migrate só com autorização; secrets só em env — `docs/database.md` | Técnica |
 
 ### Pendência
 
-Smoke Neon↔Vercel↔Prisma sob carga real na fase de deploy. Não bloqueia bootstrap sem credenciais.
+Smoke Neon↔Vercel sob carga real na fase de deploy. Documentar URL no README quando existir.
 
 ---
 
@@ -253,8 +255,10 @@ As decisões acima permanecem compatíveis com:
 
 - Next.js App Router + TS strict + Mastra + PG/Prisma  
 - Domain separado do agent e do Ticket Service  
-- Confirmação no servidor; authz por funcionário  
+- Confirmação no servidor (UI); authz por funcionário  
 - Pause do agent; persistência de histórico e `DecisionTrace`  
-- Testes unit/integration/E2E  
+- Testes unit / integration (`nexo_e2e`) / E2E Playwright + CI  
+
+Entregáveis PRD (README): como rodar · arquitetura · decisão do agent · qualidade · trade-offs · mais tempo · escolha do LLM · deploy (quando houver) — cobertos no `README.md` (2026-10-30).
 
 **Não** se adiciona embedding store, calendário de feriados rígido, nem nova camada além do já planejado.

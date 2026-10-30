@@ -70,9 +70,9 @@ Usar **npm** (`package-lock.json`).
 
 1. [x] Docker Compose (app + Postgres) para avaliadores — `docs/docker.md`
 2. [x] Rate limit (login + agent) / proteção de chave Gemini (redação + só server)
-3. Playwright E2E
-4. README (arquitetura, agent, trade-offs, SLA simplificado, como rodar + Docker)
-5. Deploy Vercel + Neon (validar pooling)
+3. [x] Playwright E2E P0 + integração I1–I5 + Postgres `nexo_e2e` + job CI e2e
+4. [x] README de entrega PRD (arquitetura, agent, qualidade, trade-offs, Gemini, mais tempo, como rodar + Docker)
+5. [ ] Deploy Vercel + Neon (validar pooling) — diferencial; documentar URL no README quando existir
 
 ---
 

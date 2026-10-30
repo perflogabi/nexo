@@ -1,82 +1,189 @@
 # Nexo Assist
 
-Agente de atendimento do service desk de TI (desafio Nexo / Beyond the Bytes).
+Agente de atendimento do service desk de TI — desafio técnico [Beyond the Bytes / Nexo](Desafio_Tecnico_Nexo_Assist_PRD_v5.pdf) (PRD v5).
 
-## Como rodar (bootstrap)
+Funcionário conversa com o agent (help center + chamados + confirmação antes de mutar). Analista assume, devolve ou encerra no console. Conversas e estado sobrevivem a reinício (PostgreSQL).
+
+---
+
+## Como rodar
+
+### Opção A — Docker
 
 ```bash
-cp .env.example .env
+docker compose up --build
+# → http://localhost:3000  (se ocupada: APP_PORT=3001 docker compose up --build)
+```
+
+- `NEXO_ENV=demo` + `AGENT_LLM=mock` (sem chave Gemini).
+- Postgres no Compose; Neon **não** é necessário.
+- Contas (qualquer senha): `ana.souza@nexo.com.br` · `analista@nexo.local`
+- Detalhes: [`docs/docker.md`](docs/docker.md)
+
+Gemini no Docker (opt-in, **não** lê `GEMINI_API_KEY` do `.env` do host):
+
+```bash
+AGENT_LLM=gemini NEXO_DOCKER_GEMINI_API_KEY=sua-chave docker compose up --build
+```
+
+### Opção B — Dev local + Neon
+
+```bash
+cp .env.example .env   # preencha DATABASE_URL, DIRECT_URL, AUTH_SECRET; opcional GEMINI_API_KEY
 npm install
+npm run db:generate
+npm run db:migrate:deploy   # ou db:migrate:dev — só com Neon autorizado
+npm run db:seed
 npm run dev
 ```
 
-Abra [http://localhost:3000](http://localhost:3000).
+Abra [http://localhost:3000](http://localhost:3000). Banco oficial: **Neon** — [`docs/database.md`](docs/database.md).
 
-### Scripts
+### Variáveis essenciais
 
-| Script                      | Descrição                                             |
-| --------------------------- | ----------------------------------------------------- |
-| `npm run dev`               | Next.js em desenvolvimento                            |
-| `npm run lint`              | ESLint                                                |
-| `npm run typecheck`         | TypeScript `strict`                                   |
-| `npm test`                  | Vitest (unitário)                                     |
-| `npm run test:e2e`          | Playwright (Postgres e2e + mock; ver § E2E)           |
-| `npm run test:integration`  | Integração Prisma no banco `nexo_e2e`                 |
-| `npm run db:e2e:up`         | Sobe Postgres efêmero E2E (`:5433`, db `nexo_e2e`)    |
-| `npm run db:e2e:prepare`    | Guardrail + migrate + seed-e2e                        |
-| `npm run build`             | Build de produção                                     |
-| `npm run storybook`         | Storybook                                             |
-| `npm run db:generate`       | `prisma generate`                                     |
-| `npm run db:validate`       | `prisma validate`                                     |
-| `npm run db:migrate:dev`    | `prisma migrate dev` (dev; requer Neon + autorização) |
-| `npm run db:migrate:deploy` | `prisma migrate deploy` (prod/CI autorizado)          |
-| `npm run db:studio`         | `prisma studio`                                       |
-| `npm run db:seed`           | Seed mínimo idempotente (demo)                        |
+Ver [`.env.example`](.env.example). Resumo:
 
-### Banco (Neon + Prisma)
+| Variável                      | Uso                                                        |
+| ----------------------------- | ---------------------------------------------------------- |
+| `DATABASE_URL` / `DIRECT_URL` | Neon pooled + direct (Prisma)                              |
+| `AUTH_SECRET`                 | Sessão assinada                                            |
+| `NEXO_ENV`                    | `production` \| `development` \| `demo` \| `test` \| `e2e` |
+| `AGENT_LLM`                   | `mock` \| `gemini` — **mock rejeitado em produção**        |
+| `GEMINI_API_KEY`              | Só servidor; obrigatória em produção com Gemini            |
 
-Banco oficial: **Neon** (PostgreSQL gerenciado). Sem Postgres local obrigatório.
+---
 
-1. No [console Neon](https://console.neon.tech), copie as connection strings **Pooled** e **Direct**.
-2. `cp .env.example .env` e preencha `DATABASE_URL` (pooled) e `DIRECT_URL` (direct).
-3. `npm run db:generate` e `npm run db:validate`.
-4. Migrations: `npm run db:migrate:dev` (dev) / `npm run db:migrate:deploy` (prod) — **só** com credenciais reais e autorização; não rode no Neon compartilhado sem intenção explícita.
+## Visão geral da arquitetura
 
-Detalhes: [`docs/database.md`](docs/database.md). Schema: `prisma/schema.prisma` (alinhado a `memory-bank/data-model.md`).
+Separação alinhada ao PRD (interface ≠ agent ≠ serviços ≠ domínio):
 
-### E2E (Playwright + Postgres isolado)
-
-Não use o Neon do `.env` nem o compose principal (`nexo_pg`). Os scripts injetam env e validam host/db/`NEXO_ENV` antes de migrate/testes.
-
-```bash
-npm run db:e2e:up
-npm run db:e2e:prepare
-npm run test:integration
-npm run test:e2e          # build automático se faltar `.next`; AGENT_LLM=mock
-npm run db:e2e:down       # sem -v (não remove volumes do compose principal)
+```
+UI (Next.js App Router + Tailwind)
+  → Route Handlers / middleware (authz por role)
+    → Services (auth, conversations, tickets, help, analyst)
+      → Agent orchestrator (Mastra + tools) + Domain (Anexo A testável)
+        → Prisma → PostgreSQL (Neon em prod; Compose em demo/E2E)
 ```
 
-Contas do `seed-e2e`: mesmos e-mails demo + `analista2@nexo.local` (claim concorrente). Fluxos criam conversas próprias.
+| Camada       | Onde                        | Papel                                                                                            |
+| ------------ | --------------------------- | ------------------------------------------------------------------------------------------------ |
+| Interface    | `src/app`, `src/components` | Login, `/chat`, `/profile`, `/analyst`; sem regras Anexo A no client                             |
+| Services     | `src/services`              | Casos de uso, authz, ConfirmationGate aplicado, claim atômico                                    |
+| Agent        | `src/agent`                 | Intent + tools; **não** muta ticket sem confirmação; pausa se `WAITING_ANALYST` / `WITH_ANALYST` |
+| Domain       | `src/domain`                | SLA, duplicidade (Jaccard), reopen 7d, transfer reasons, escopo                                  |
+| Persistência | `prisma/`                   | Conversas, mensagens, `DecisionTrace`, tickets, eventos                                          |
 
-### CI
+Stack: TypeScript `strict` · Next.js 15 · Tailwind · Mastra · Gemini (`@google/genai`) · Prisma 6 · Vitest / Playwright / Storybook · GitHub Actions · deploy previsto Vercel+Neon.
 
-GitHub Actions: job `ci` (lint/typecheck/unit/validate/build) + job `e2e` (Postgres service `nexo_e2e`, integração, Playwright). Sem Gemini real; sem secrets Neon no job e2e.
+Detalhe: [`memory-bank/architecture.md`](memory-bank/architecture.md).
 
-### Husky
+---
 
-Hook `pre-commit` (lint-staged) está preparado. **Ativa após** `git init` + `npm install` (não inicializado automaticamente neste bootstrap).
+## Como o agent decide o que fazer
 
-## Documentação
+A cada mensagem do funcionário (conversa `WITH_AGENT`):
 
-- PRD: `Desafio_Tecnico_Nexo_Assist_PRD_v5.pdf`
-- Memory Bank: `memory-bank/`
-- Protótipos: `docs/prototype/`
-- Agentes: `AGENTS.md`
+1. **Orquestrador** verifica pause (`isAgentPaused`), limite 30 msgs e rate limit.
+2. **Brain** (mock ou Gemini) interpreta a intenção e pode chamar **tools tipadas** (help, listar/consultar tickets, preparar draft, pedir transferência).
+3. **Domain / PolicyEngine** decide o que é permitido (SLA, duplicidade, crítico/vencido, transfer reasons) — o LLM **não** é a fonte da verdade do Anexo A.
+4. Mutação de chamado (**create / update / reopen**): tool só **prepara** rascunho + token; a mutação ocorre em `POST .../confirm` após o funcionário confirmar na UI (**ConfirmationGate**).
+5. Persistência: mensagem do agent + `DecisionTrace` (intent, actions, rationale, tools, `presentedAssurance`, `policyHits`).
 
-## Próximos marcos
+Transferência → `WAITING_ANALYST`; agent para de responder até devolução. Analista: claim atômico → `WITH_ANALYST` → devolver / encerrar (`CLOSED`).
 
-1. Auth demo + domínio (SLA, duplicidade, ConfirmationGate) com testes
-2. Chat do funcionário (fidelidade ao protótipo)
-3. Agent Mastra + Gemini (mocks no CI)
-4. Console do analista
-5. Deploy (Vercel + Neon; validar pooling com credenciais reais — ver `docs/database.md`)
+---
+
+## Qualidade das decisões (como garantimos)
+
+| Mecanismo             | O quê                                                                                                  |
+| --------------------- | ------------------------------------------------------------------------------------------------------ |
+| Domínio testável      | Anexo A em `src/domain` com unitários (SLA, Jaccard, reopen, transfer, escopo) — independente do LLM   |
+| ConfirmationGate      | Sem confirm da UI, não cria/atualiza/reabre ticket                                                     |
+| Authz no servidor     | Middleware + services; ticket/conversa só do owner; analista não vê chat de outro como dono            |
+| Trace                 | `DecisionTrace` por resposta do agent (transparência do PRD)                                           |
+| LLM                   | Produção: só Gemini, **sem** fallback silencioso para mock; CI/E2E/demo: `AGENT_LLM=mock`              |
+| Testes                | Unitários (Vitest) · integração Prisma em `nexo_e2e` (I1–I5) · Playwright P0 · CI com Postgres efêmero |
+| Segurança operacional | Rate limit login/agent · redação de segredos em logs · cookies `Secure` só com `NEXO_ENV=production`   |
+
+---
+
+## Escolha do modelo (LLM)
+
+**Google Gemini** via `@google/genai` (default `gemini-flash-lite-latest`).
+
+- Atende o PRD (“qualquer provedor”) com SDK oficial TypeScript e boa relação custo/latência para service desk.
+- Mastra orquestra tools; o domínio permanece no código.
+- CI e Docker demo usam **mock** determinístico (sem custo, previsível para E2E).
+- Em **produção**, `AGENT_LLM=mock` é rejeitado; falta de chave falha de forma explícita.
+
+---
+
+## Principais trade-offs
+
+1. **Regras no domain vs LLM** — mais código e testes; decisões críticas auditáveis e estáveis.
+2. **Confirm só na UI** — não deixa o modelo “confirmar” sozinho; um passo a mais na UX.
+3. **Neon oficial + Compose demo/E2E** — prod gerenciada; avaliadores e CI sem depender do Neon do autor.
+4. **Poll 5s** em vez de WebSocket — simples na Vercel; latência aceitável no console.
+5. **Rate limit em memória** — suficiente no MVP single-instance; em multi-instância seria Redis.
+6. **Jaccard ≥ 0.5 / TTL confirmação** — hipóteses calibráveis (`requirements-resolution.md`), não valores do PRD.
+7. **Standalone + cópia de** `.next/static` **no E2E** — alinhado ao Docker; evita `/login` preso em “Carregando…”.
+
+---
+
+## O que faria com mais tempo
+
+- Painel/UI completa do `DecisionTrace` (chips + detalhe expandível em todas as bolhas).
+- Streaming SSE da resposta do agent.
+- Deploy Vercel + Neon com smoke de pooling sob carga; monitoramento de custo Gemini.
+- E8 P1: double-claim em dois browsers; feriados no calendário de SLA.
+- Rate limit distribuído; embeddings opcionais para duplicidade.
+- Acessibilidade e polimento visual fino vs protótipo.
+
+---
+
+## Deploy
+
+**Ainda não publicado** (diferencial do PRD; ausência não penaliza). Caminho previsto: **Vercel** + **Neon**, com `NEXO_ENV=production`, `AGENT_LLM=gemini`, `GEMINI_API_KEY`, `AUTH_SECRET`, URLs Neon — sem mock. Proteções já no código: rate limit, authz, cookie Secure em produção, chave só em env.
+
+Quando houver URL, ela entra aqui.
+
+---
+
+## Testes e CI
+
+```bash
+npm test                     # unitário (sem Gemini real)
+npm run db:e2e:up
+npm run db:e2e:prepare
+npm run test:integration     # I1–I5 em Postgres nexo_e2e (:5433)
+npm run test:e2e             # Playwright; copia static → standalone
+```
+
+GitHub Actions: job `ci` (lint / typecheck / unit / prisma validate / build) + job `e2e` (Postgres service `nexo_e2e`, integração, Playwright). Sem secret Gemini/Neon no E2E.
+
+---
+
+## Scripts úteis
+
+| Script                                          | Descrição               |
+| ----------------------------------------------- | ----------------------- |
+| `npm run dev`                                   | Next.js desenvolvimento |
+| `npm run lint` / `typecheck` / `test` / `build` | Qualidade               |
+| `npm run test:e2e` / `test:integration`         | E2E / integração        |
+| `npm run db:e2e:up` / `prepare` / `down`        | Postgres E2E            |
+| `npm run storybook`                             | Componentes isolados    |
+| `npm run db:seed`                               | Seed demo (Neon)        |
+| `npm run docker:up`                             | Alias Compose           |
+
+---
+
+## Documentação do projeto
+
+| Doc                                                                                | Conteúdo                                               |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| [`Desafio_Tecnico_Nexo_Assist_PRD_v5.pdf`](Desafio_Tecnico_Nexo_Assist_PRD_v5.pdf) | PRD                                                    |
+| [`memory-bank/`](memory-bank/)                                                     | Arquitetura, progresso, decisões vs PRD, testes, dados |
+| [`docs/database.md`](docs/database.md)                                             | Neon + Prisma                                          |
+| [`docs/docker.md`](docs/docker.md)                                                 | Compose demo                                           |
+| [`docs/prototype/`](docs/prototype/)                                               | PNGs do Anexo C                                        |
+| [`AGENTS.md`](AGENTS.md)                                                           | Instruções para contribuidores/agentes                 |
