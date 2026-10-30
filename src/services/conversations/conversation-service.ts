@@ -16,6 +16,7 @@ import {
   MESSAGE_LIMIT_PER_CONVERSATION,
 } from '@/domain/message-limit';
 import { canTransitionConversation, transferTransitionRequirements } from '@/domain/transfer';
+import { normalizeTransferReasonCode } from '@/domain/transfer-reason-normalize';
 import type { TransferReasonCode } from '@/domain/types';
 import type { ConversationStore } from './conversation-store';
 import type {
@@ -75,6 +76,17 @@ export function createConversationService(deps: ConversationServiceDeps): Conver
   return {
     async createConversation(employeeId) {
       const now = nowFn();
+      // Uma sessão ativa por funcionário: encerra WAITING/WITH_* anteriores (seed + /chat paralelo).
+      const existing = await store.listConversationsByEmployee(employeeId);
+      for (const c of existing) {
+        if (c.status === 'CLOSED') continue;
+        if (!canTransitionConversation(c.status, 'CLOSED')) continue;
+        await store.updateConversationStatus({
+          id: c.id,
+          status: 'CLOSED',
+          updatedAt: now,
+        });
+      }
       return store.createConversation({ id: createId(), employeeId, now });
     },
 
@@ -176,7 +188,7 @@ export function createConversationService(deps: ConversationServiceDeps): Conver
         id: conversation.id,
         status: 'WAITING_ANALYST',
         transferSummary: summary,
-        transferReasonCode: input.reasonCode,
+        transferReasonCode: normalizeTransferReasonCode(input.reasonCode),
         assignedAnalystId: reqs.assignedAnalystIdMustBeNull ? null : conversation.assignedAnalystId,
         updatedAt: nowFn(),
       });

@@ -31,6 +31,24 @@ describe('ConversationService', () => {
     );
   });
 
+  it('closes prior open conversation when creating a new /chat session', async () => {
+    const { service, store } = build();
+    const first = await service.createConversation('emp-a');
+    await store.updateConversationStatus({
+      id: first.id,
+      status: 'WAITING_ANALYST',
+      transferSummary: 'seed',
+      transferReasonCode: 'USER_REQUEST',
+      assignedAnalystId: null,
+      updatedAt: NOW,
+    });
+    const second = await service.createConversation('emp-a');
+    const closed = await service.getConversation(first.id, 'emp-a');
+    expect(closed.status).toBe('CLOSED');
+    expect(second.status).toBe('WITH_AGENT');
+    expect(second.id).not.toBe(first.id);
+  });
+
   it('increments messageCount only for EMPLOYEE/AGENT up to 30', async () => {
     const { service } = build();
     const conv = await service.createConversation('emp-a');

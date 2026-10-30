@@ -38,6 +38,24 @@ describe('pickAgentChatConversation', () => {
 });
 
 describe('pickActiveConversation', () => {
+  it('mantém WITH_ANALYST no reload (não descarta atendimento humano)', () => {
+    const picked = pickActiveConversation([
+      {
+        id: 'human',
+        status: 'WITH_ANALYST',
+        messageCount: 8,
+        updatedAt: '2026-10-29T20:00:00.000Z',
+      },
+      {
+        id: 'closed',
+        status: 'CLOSED',
+        messageCount: 3,
+        updatedAt: '2026-10-28T12:00:00.000Z',
+      },
+    ]);
+    expect(picked?.id).toBe('human');
+  });
+
   it('prefere WITH_AGENT sobre WAITING_ANALYST', () => {
     const picked = pickActiveConversation([
       {

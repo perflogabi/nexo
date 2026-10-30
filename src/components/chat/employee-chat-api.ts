@@ -1,5 +1,7 @@
 type ApiErrorBody = { error?: { code?: string; reason?: string; message?: string } };
 
+const NO_STORE: RequestInit = { cache: 'no-store' };
+
 export type EmployeeApiConversation = {
   id: string;
   status: string;
@@ -71,7 +73,7 @@ export function pickAgentChatConversation(
 }
 
 export async function fetchMyConversations(): Promise<EmployeeApiConversation[]> {
-  const res = await fetch('/api/conversations', { method: 'GET' });
+  const res = await fetch('/api/conversations', { method: 'GET', ...NO_STORE });
   if (!res.ok) throw new Error(await readError(res));
   const data = (await res.json()) as { conversations: EmployeeApiConversation[] };
   return data.conversations ?? [];
@@ -89,6 +91,7 @@ export async function fetchConversationMessages(
 ): Promise<{ conversation: EmployeeApiConversation; messages: EmployeeApiMessage[] }> {
   const res = await fetch(`/api/conversations/${encodeURIComponent(id)}/messages`, {
     method: 'GET',
+    ...NO_STORE,
   });
   if (!res.ok) throw new Error(await readError(res));
   return (await res.json()) as {
@@ -122,9 +125,31 @@ export async function sendEmployeeMessage(
   };
 }
 
+export async function confirmTicketDraft(
+  conversationId: string,
+  token: string,
+): Promise<{ ticket: { id: string; number: string; status: string }; event: unknown }> {
+  const res = await fetch(`/api/conversations/${encodeURIComponent(conversationId)}/confirm`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
+  });
+  if (!res.ok) throw new Error(await readError(res));
+  return (await res.json()) as {
+    ticket: { id: string; number: string; status: string };
+    event: unknown;
+  };
+}
+
 export function actionLabelsFromTrace(trace: EmployeeApiTrace | null | undefined): string[] {
   if (!trace || !Array.isArray(trace.actions)) return ['respondeu'];
   return (trace.actions as Array<{ label?: string; code?: string }>)
-    .map((a) => a.label || a.code)
+    .map((a) => {
+      const raw = a.label || a.code;
+      if (!raw) return null;
+      // Evita chip “N chamado(s)” desalinhado da lista filtrada na UI.
+      if (/^\d+\s+chamado/.test(raw)) return 'consultou seus chamados';
+      return raw;
+    })
     .filter((x): x is string => Boolean(x));
 }

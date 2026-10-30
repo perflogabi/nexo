@@ -1,6 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import {
+  isTicketDetailPayload,
+  isTicketDraftPayload,
+  isTicketSelectPayload,
+} from '@/lib/chat-ui-payload';
+import { useChatPoll } from '@/lib/chat-poll';
+import {
+  filterEmployeeVisibleMessages,
+  isAnalystOnlySystemMessage,
+} from '@/lib/employee-visible-messages';
 import { ChatAgentMessage } from '@/components/chat/ChatAgentMessage';
 import { ChatAgentMeta } from '@/components/chat/ChatAgentMeta';
 import { ChatComposer } from '@/components/chat/ChatComposer';
@@ -13,7 +23,6 @@ import {
   CHAT_SCROLL_PAD,
   CHAT_THREAD_GAP,
 } from '@/components/chat/chat-layout';
-import { isTicketDetailPayload, isTicketSelectPayload } from '@/agent/chat-ui-payload';
 import {
   DEMO_QUICK_REPLIES,
   DEMO_TICKET_DETAIL,
@@ -21,15 +30,17 @@ import {
 } from '@/components/chat/chat-demo-data';
 import {
   actionLabelsFromTrace,
+  confirmTicketDraft,
   createMyConversation,
   fetchConversationMessages,
   fetchMyConversations,
-  pickAgentChatConversation,
+  pickActiveConversation,
   sendEmployeeMessage,
   type EmployeeApiMessage,
   type EmployeeApiTrace,
 } from '@/components/chat/employee-chat-api';
 import { TicketDetailCard } from '@/components/chat/TicketDetailCard';
+import { TicketDraftCard } from '@/components/chat/TicketDraftCard';
 import { TicketSelectList } from '@/components/chat/TicketSelectList';
 
 type Props = {
@@ -50,16 +61,27 @@ function LiveMessage({
   actions,
   selectedTicketId,
   onSelectTicket,
+  draftBusy,
+  dismissedDraftIds,
+  onConfirmDraft,
+  onEditDraft,
+  onCancelDraft,
 }: {
   message: EmployeeApiMessage;
   actions?: string[];
   selectedTicketId: string;
   onSelectTicket: (id: string, label: string) => void;
+  draftBusy: boolean;
+  dismissedDraftIds: ReadonlySet<string>;
+  onConfirmDraft: (messageId: string, token: string) => void;
+  onEditDraft: (messageId: string) => void;
+  onCancelDraft: (messageId: string) => void;
 }) {
   if (message.authorType === 'EMPLOYEE') {
     return <ChatUserBubble>{message.content}</ChatUserBubble>;
   }
   if (message.authorType === 'SYSTEM') {
+    if (isAnalystOnlySystemMessage(message)) return null;
     return (
       <p className="text-center text-[12px] text-[var(--color-text-muted)]" role="status">
         {message.content}
@@ -79,6 +101,8 @@ function LiveMessage({
   const payload = message.structuredPayload;
   const ticketSelect = isTicketSelectPayload(payload) ? payload : null;
   const ticketDetail = isTicketDetailPayload(payload) ? payload : null;
+  const ticketDraft =
+    isTicketDraftPayload(payload) && !dismissedDraftIds.has(message.id) ? payload : null;
   const listValue =
     ticketSelect?.items.some((i) => i.id === selectedTicketId) === true
       ? selectedTicketId
@@ -92,9 +116,13 @@ function LiveMessage({
             ? actions?.length
               ? actions
               : [`consultou o ${ticketDetail.number}`, 'calculou o prazo']
-            : actions?.length
-              ? actions
-              : ['respondeu']
+            : ticketDraft
+              ? actions?.length
+                ? actions
+                : ['preparou rascunho do chamado']
+              : actions?.length
+                ? actions
+                : ['respondeu']
         }
       />
       {ticketSelect && ticketSelect.items.length > 0 ? (
@@ -135,7 +163,26 @@ function LiveMessage({
           </ChatAgentMessage>
         </>
       ) : null}
-      {!ticketSelect && !ticketDetail ? <ChatTextBubble>{message.content}</ChatTextBubble> : null}
+      {ticketDraft ? (
+        <>
+          <ChatTextBubble>{message.content}</ChatTextBubble>
+          <TicketDraftCard
+            headerLabel={ticketDraft.headerLabel}
+            status={ticketDraft.status}
+            title={ticketDraft.title}
+            description={ticketDraft.description}
+            meta={ticketDraft.meta}
+            disabled={draftBusy}
+            confirming={draftBusy}
+            onConfirm={() => onConfirmDraft(message.id, ticketDraft.confirmationToken)}
+            onEdit={() => onEditDraft(message.id)}
+            onCancel={() => onCancelDraft(message.id)}
+          />
+        </>
+      ) : null}
+      {!ticketSelect && !ticketDetail && !ticketDraft ? (
+        <ChatTextBubble>{message.content}</ChatTextBubble>
+      ) : null}
     </div>
   );
 }
@@ -191,21 +238,39 @@ export function EmployeeChatThread({ messageCount = 16, demo = false }: Props) {
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [draftBusy, setDraftBusy] = useState(false);
+  const [dismissedDraftIds, setDismissedDraftIds] = useState<Set<string>>(() => new Set());
+
+  const applyConversationDetail = useCallback(
+    (detail: {
+      conversation: { id: string; messageCount: number; status: string };
+      messages: EmployeeApiMessage[];
+    }) => {
+      setLive(true);
+      setConversationId(detail.conversation.id);
+      setMessages(filterEmployeeVisibleMessages(detail.messages ?? []));
+      setCount(detail.conversation.messageCount);
+      setStatus(detail.conversation.status);
+    },
+    [],
+  );
 
   const load = useCallback(async () => {
     const list = await fetchMyConversations();
-    // Sempre sessão WITH_AGENT no /chat — assim o Nexo Assist responde (não a fila).
-    let active = pickAgentChatConversation(list);
+    // Mantém WAITING/WITH_ANALYST (não cria sessão nova — senão some o transcript no reload).
+    let active = pickActiveConversation(list);
     if (!active) {
       active = await createMyConversation();
     }
     const detail = await fetchConversationMessages(active.id);
-    setLive(true);
-    setConversationId(detail.conversation.id);
-    setMessages(detail.messages ?? []);
-    setCount(detail.conversation.messageCount);
-    setStatus(detail.conversation.status);
-  }, []);
+    applyConversationDetail(detail);
+  }, [applyConversationDetail]);
+
+  const refreshOpenConversation = useCallback(async () => {
+    if (!conversationId || sending) return;
+    const detail = await fetchConversationMessages(conversationId);
+    applyConversationDetail(detail);
+  }, [applyConversationDetail, conversationId, sending]);
 
   useEffect(() => {
     if (demo) return;
@@ -224,6 +289,12 @@ export function EmployeeChatThread({ messageCount = 16, demo = false }: Props) {
       cancelled = true;
     };
   }, [demo, load]);
+
+  // Poll enquanto há humano na fila / no atendimento (Vercel sem WebSocket).
+  useChatPoll(
+    !demo && live && (status === 'WAITING_ANALYST' || status === 'WITH_ANALYST'),
+    refreshOpenConversation,
+  );
 
   async function handleSend(text: string) {
     if (sending || status === 'CLOSED') return;
@@ -285,6 +356,39 @@ export function EmployeeChatThread({ messageCount = 16, demo = false }: Props) {
     }
   }
 
+  async function handleConfirmDraft(messageId: string, token: string) {
+    if (!conversationId || draftBusy) return;
+    setDraftBusy(true);
+    setError(null);
+    try {
+      const result = await confirmTicketDraft(conversationId, token);
+      setDismissedDraftIds((prev) => new Set(prev).add(messageId));
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `local_confirm_${Date.now()}`,
+          conversationId,
+          authorType: 'SYSTEM',
+          authorId: null,
+          content: `Chamado ${result.ticket.number} registrado (${result.ticket.status}).`,
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'CONFIRM_FAILED');
+    } finally {
+      setDraftBusy(false);
+    }
+  }
+
+  function handleCancelDraft(messageId: string) {
+    setDismissedDraftIds((prev) => new Set(prev).add(messageId));
+  }
+
+  function handleEditDraft(messageId: string) {
+    setDismissedDraftIds((prev) => new Set(prev).add(messageId));
+  }
+
   const showDemo = demo || !live;
   // Composer liberado no live mesmo sem conversa ainda — 1º envio cria a sessão.
   const composerDisabled = showDemo || sending || status === 'CLOSED' || count >= 30;
@@ -326,6 +430,11 @@ export function EmployeeChatThread({ messageCount = 16, demo = false }: Props) {
                     setSelectedTicketId(id);
                     void handleSend(label);
                   }}
+                  draftBusy={draftBusy}
+                  dismissedDraftIds={dismissedDraftIds}
+                  onConfirmDraft={(messageId, token) => void handleConfirmDraft(messageId, token)}
+                  onEditDraft={handleEditDraft}
+                  onCancelDraft={handleCancelDraft}
                   actions={
                     m.authorType === 'AGENT'
                       ? actionLabelsFromTrace(traceByMessageId[m.id])

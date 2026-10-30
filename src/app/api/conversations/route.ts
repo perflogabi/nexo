@@ -12,7 +12,7 @@ export async function GET() {
   }
 
   const conversations = await getConversationService().listMyConversations(session.employeeId);
-  return NextResponse.json({ conversations });
+  return NextResponse.json({ conversations }, { headers: { 'Cache-Control': 'no-store' } });
 }
 
 export async function POST() {
