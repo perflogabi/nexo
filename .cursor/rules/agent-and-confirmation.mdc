@@ -7,7 +7,7 @@ alwaysApply: false
 # Agent e confirmação
 
 - Preferir Mastra; tools tipadas com side-effects controlados.
-- Fluxo mutável: `prepareTicketDraft` → UI confirma → `confirmTicketMutation(token)`.
+- Fluxo mutável: `prepareTicketDraft` (tool LLM) → UI Confirmar → `POST .../confirm` (`confirmTicketMutation(token)` no serviço). **Não** expor confirm como tool do LLM.
 - `PendingConfirmation`: one-shot, com `employeeId`, expiração; rejeitar token alheio/expirado/consumido.
 - Toda resposta do agent persiste `DecisionTrace` (intent, actions, confidence, rationale, policyHits).
 - Transferência: `USER_REQUEST`/`CRITICAL`/`OVERDUE`/`LOW_CONFIDENCE` separados; score LLM não decide sozinho.

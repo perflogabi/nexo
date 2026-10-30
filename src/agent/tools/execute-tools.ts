@@ -5,6 +5,7 @@
 
 import { shouldTransfer, type TransferSignals } from '@/domain/transfer';
 import { findDuplicateOrReopenCandidate } from '@/domain/duplicity';
+import { normalizeTicketDraftFields } from '@/domain/ticket-draft-normalize';
 import type { Category, Priority, TicketType } from '@/domain/types';
 import type { AgentToolCallTrace } from '@/agent/types';
 import type { AgentToolContext } from '@/agent/tools/tool-context';
@@ -63,7 +64,8 @@ export async function toolListMyTickets(
     return {
       ok: true,
       data,
-      trace: okTrace('listMyTickets', `${data.length} chamado(s)`),
+      // Label estável para a UI (o número exibido no texto/lista pode filtrar abertos).
+      trace: okTrace('listMyTickets', 'consultou seus chamados'),
     };
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'list_failed';
@@ -157,26 +159,38 @@ export async function toolPrepareTicketDraft(
   ctx: AgentToolContext,
   input: {
     operation: 'CREATE' | 'UPDATE' | 'REOPEN';
-    type: TicketType;
+    type: TicketType | string;
     title: string;
     description: string;
-    category: Category;
-    priority: Priority;
+    category: Category | string;
+    priority: Priority | string;
     ticketId?: string;
   },
-): Promise<ToolResult<{ token: string; expiresAt: string; operation: string }>> {
+): Promise<
+  ToolResult<{
+    token: string;
+    expiresAt: string;
+    operation: string;
+    type: TicketType;
+    category: Category;
+    priority: Priority;
+    title: string;
+    description: string;
+  }>
+> {
   try {
+    const fields = normalizeTicketDraftFields(input);
     const result = await ctx.tickets.prepareTicketDraft({
       sessionEmployeeId: ctx.employeeId,
       conversationId: ctx.conversationId,
       operation: input.operation,
       payload: {
         ticketId: input.ticketId,
-        type: input.type,
+        type: fields.type,
         title: input.title,
         description: input.description,
-        category: input.category,
-        priority: input.priority,
+        category: fields.category,
+        priority: fields.priority,
         affectedEmployeeId: ctx.employeeId,
       },
     });
@@ -186,6 +200,11 @@ export async function toolPrepareTicketDraft(
         token: result.token,
         expiresAt: result.expiresAt.toISOString(),
         operation: result.operation,
+        type: fields.type,
+        category: fields.category,
+        priority: fields.priority,
+        title: input.title,
+        description: input.description,
       },
       trace: okTrace('prepareTicketDraft', `${result.operation} → confirmação pendente`),
     };
@@ -195,6 +214,9 @@ export async function toolPrepareTicketDraft(
   }
 }
 
+/**
+ * Confirm via serviço — usado por API/UI, **não** exposto como tool do LLM.
+ */
 export async function toolConfirmTicketMutation(
   ctx: AgentToolContext,
   token: string,
@@ -203,6 +225,7 @@ export async function toolConfirmTicketMutation(
     const result = await ctx.tickets.confirmTicketMutation({
       token,
       sessionEmployeeId: ctx.employeeId,
+      expectedConversationId: ctx.conversationId,
     });
     return {
       ok: true,

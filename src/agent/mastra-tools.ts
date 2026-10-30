@@ -1,12 +1,12 @@
 /**
  * Wrappers Mastra (createTool) sobre execute-tools do domínio.
+ * confirmTicketMutation NÃO é tool do LLM — só POST /api/.../confirm (UI).
  */
 
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 import type { AgentToolContext } from '@/agent/tools/tool-context';
 import {
-  toolConfirmTicketMutation,
   toolFindDuplicateOrReopen,
   toolGetTicket,
   toolListMyTickets,
@@ -32,37 +32,38 @@ export function createMastraTools(getCtx: () => AgentToolContext) {
 
   const listMyTickets = createTool({
     id: 'listMyTickets',
-    description: 'Lista chamados do funcionário autenticado (owner)',
+    description: 'Lista chamados do funcionário da sessão',
     inputSchema: z.object({}),
     execute: async () => toolListMyTickets(getCtx()),
   });
 
   const getTicket = createTool({
     id: 'getTicket',
-    description: 'Detalhe de um chamado do owner',
+    description: 'Detalhe de um chamado do funcionário',
     inputSchema: z.object({ ticketId: z.string() }),
     execute: async ({ ticketId }) => toolGetTicket(getCtx(), ticketId),
   });
 
   const findDuplicateOrReopenCandidate = createTool({
     id: 'findDuplicateOrReopenCandidate',
-    description: 'Avalia duplicidade/reopen por título (Jaccard) no domínio',
+    description: 'Busca duplicidade ou candidato a reopen',
     inputSchema: z.object({
       title: z.string(),
       category: categorySchema,
       type: ticketTypeSchema.optional(),
     }),
-    execute: async ({ title, category, type }) =>
+    execute: async (input) =>
       toolFindDuplicateOrReopen(getCtx(), {
-        title,
-        category: category as Category,
-        type: type as TicketType | undefined,
+        title: input.title,
+        category: input.category as Category,
+        type: input.type as TicketType | undefined,
       }),
   });
 
   const prepareTicketDraft = createTool({
     id: 'prepareTicketDraft',
-    description: 'Prepara mutação de chamado (PendingConfirmation) — não grava o ticket ainda',
+    description:
+      'Prepara rascunho de mutação (ConfirmationGate). NÃO confirma — a UI do funcionário confirma.',
     inputSchema: z.object({
       operation: z.enum(['CREATE', 'UPDATE', 'REOPEN']),
       type: ticketTypeSchema,
@@ -82,13 +83,6 @@ export function createMastraTools(getCtx: () => AgentToolContext) {
         priority: input.priority as Priority,
         ticketId: input.ticketId,
       }),
-  });
-
-  const confirmTicketMutation = createTool({
-    id: 'confirmTicketMutation',
-    description: 'Confirma mutação com token do ConfirmationGate (após OK do funcionário)',
-    inputSchema: z.object({ token: z.string() }),
-    execute: async ({ token }) => toolConfirmTicketMutation(getCtx(), token),
   });
 
   const requestAnalystTransfer = createTool({
@@ -111,7 +105,6 @@ export function createMastraTools(getCtx: () => AgentToolContext) {
     getTicket,
     findDuplicateOrReopenCandidate,
     prepareTicketDraft,
-    confirmTicketMutation,
     requestAnalystTransfer,
   };
 }

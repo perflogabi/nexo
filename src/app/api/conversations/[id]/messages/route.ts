@@ -5,9 +5,14 @@ import {
   ConversationNotFoundError,
   MessageLimitExceededError,
 } from '@/domain/errors';
+import { runWithAgentToolContext } from '@/lib/agent-tool-context';
 import { agentRateLimitConfig, clientIpFromRequest, consumeRateLimit } from '@/lib/rate-limit';
 import { rateLimitedResponse } from '@/lib/rate-limit-response';
-import { getAgentOrchestrator, getConversationService } from '@/lib/services';
+import {
+  buildAgentToolContext,
+  getAgentOrchestrator,
+  getConversationService,
+} from '@/lib/services';
 import { readSession } from '@/lib/server-session';
 
 type Params = { params: Promise<{ id: string }> };
@@ -28,7 +33,10 @@ export async function GET(_request: Request, { params }: Params) {
       service.getConversation(id, session.employeeId),
       service.listMessages(id, session.employeeId),
     ]);
-    return NextResponse.json({ conversation, messages });
+    return NextResponse.json(
+      { conversation, messages },
+      { headers: { 'Cache-Control': 'no-store' } },
+    );
   } catch (e) {
     return mapError(e);
   }
@@ -60,16 +68,19 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   const agent = getAgentOrchestrator();
+  const toolCtx = buildAgentToolContext({
+    employeeId: session.employeeId,
+    conversationId: id,
+  });
+
   try {
-    agent.bindContext({
-      employeeId: session.employeeId,
-      conversationId: id,
-    });
-    const result = await agent.orchestrator.runEmployeeTurn({
-      conversationId: id,
-      employeeId: session.employeeId,
-      content,
-    });
+    const result = await runWithAgentToolContext(toolCtx, () =>
+      agent.runEmployeeTurn({
+        conversationId: id,
+        employeeId: session.employeeId,
+        content,
+      }),
+    );
 
     return NextResponse.json(
       {
@@ -83,8 +94,6 @@ export async function POST(request: Request, { params }: Params) {
     );
   } catch (e) {
     return mapError(e);
-  } finally {
-    agent.clearContext();
   }
 }
 

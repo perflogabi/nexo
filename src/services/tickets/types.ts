@@ -61,6 +61,8 @@ export type PrepareTicketDraftResult = {
 export type ConfirmTicketMutationInput = {
   token: string;
   sessionEmployeeId: string;
+  /** Id da conversa na URL — deve bater com o pending (evita token cross-conversation). */
+  expectedConversationId: string;
 };
 
 export type ConfirmTicketMutationResult = {

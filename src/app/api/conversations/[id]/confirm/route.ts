@@ -8,7 +8,8 @@ import { readSession } from '@/lib/server-session';
 type Params = { params: Promise<{ id: string }> };
 
 /**
- * ConfirmationGate — confirma mutação de chamado com token.
+ * ConfirmationGate — confirma mutação de chamado com token (UI only).
+ * Valida que o pending pertence à conversa da URL.
  */
 export async function POST(request: Request, { params }: Params) {
   const session = await readSession();
@@ -42,6 +43,7 @@ export async function POST(request: Request, { params }: Params) {
     const result = await getTicketService().confirmTicketMutation({
       token,
       sessionEmployeeId: session.employeeId,
+      expectedConversationId: conversationId,
     });
     return NextResponse.json({
       conversationId,

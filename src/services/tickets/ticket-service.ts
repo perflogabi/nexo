@@ -11,6 +11,7 @@ import {
   TicketNotFoundError,
 } from '@/domain/errors';
 import { computeSlaDeadline, shouldRecalculateSla } from '@/domain/sla';
+import { normalizeTicketDraftFields } from '@/domain/ticket-draft-normalize';
 import type { TicketType } from '@/domain/types';
 import {
   createIntermittentFailurePolicy,
@@ -100,6 +101,14 @@ export function createTicketService(deps: TicketServiceDeps): TicketService {
         }
       }
 
+      const normalized = normalizeTicketDraftFields(input.payload);
+      const payload: TicketDraftPayload = {
+        ...input.payload,
+        type: normalized.type,
+        category: normalized.category,
+        priority: normalized.priority,
+      };
+
       const token = createToken();
       const expiresAt = computePendingExpiresAt(now, input.ttlMs);
       await store.createPending({
@@ -108,7 +117,7 @@ export function createTicketService(deps: TicketServiceDeps): TicketService {
         employeeId: input.sessionEmployeeId,
         conversationId: input.conversationId,
         operation: input.operation,
-        payload: { ...input.payload },
+        payload,
         expiresAt,
       });
 
@@ -125,7 +134,11 @@ export function createTicketService(deps: TicketServiceDeps): TicketService {
           throw new ConfirmationInvalidError('NOT_FOUND');
         }
 
-        const conversation = await tx.findConversationById(pendingBefore.conversationId);
+        if (pendingBefore.conversationId !== input.expectedConversationId) {
+          throw new ConfirmationInvalidError('CONVERSATION_MISMATCH');
+        }
+
+        const conversation = await tx.findConversationById(input.expectedConversationId);
         if (conversation == null) {
           throw new ConfirmationInvalidError('CONVERSATION_MISMATCH');
         }
@@ -165,7 +178,13 @@ export function createTicketService(deps: TicketServiceDeps): TicketService {
           throw new ConfirmationInvalidError('ALREADY_CONSUMED');
         }
 
-        const payload = consumed.payload;
+        const normalized = normalizeTicketDraftFields(consumed.payload);
+        const payload: TicketDraftPayload = {
+          ...consumed.payload,
+          type: normalized.type,
+          category: normalized.category,
+          priority: normalized.priority,
+        };
         const actorId = input.sessionEmployeeId;
 
         if (consumed.operation === 'CREATE') {

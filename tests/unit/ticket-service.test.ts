@@ -115,6 +115,7 @@ describe('TicketService confirmation flow', () => {
     const confirmed = await service.confirmTicketMutation({
       token: prepared.token,
       sessionEmployeeId: 'emp-a',
+      expectedConversationId: 'conv-1',
     });
 
     expect(confirmed.ticket.status).toBe('OPEN');
@@ -134,11 +135,13 @@ describe('TicketService confirmation flow', () => {
     await service.confirmTicketMutation({
       token: prepared.token,
       sessionEmployeeId: 'emp-a',
+      expectedConversationId: 'conv-1',
     });
     await expect(
       service.confirmTicketMutation({
         token: prepared.token,
         sessionEmployeeId: 'emp-a',
+        expectedConversationId: 'conv-1',
       }),
     ).rejects.toBeInstanceOf(ConfirmationInvalidError);
   });
@@ -155,8 +158,51 @@ describe('TicketService confirmation flow', () => {
       service.confirmTicketMutation({
         token: prepared.token,
         sessionEmployeeId: 'emp-b',
+        expectedConversationId: 'conv-1',
       }),
     ).rejects.toMatchObject({ reason: 'WRONG_EMPLOYEE' });
+  });
+
+  it('normalizes INCIDENT / free-text category on confirm (Gemini-like payload)', async () => {
+    const { service } = buildService();
+    const prepared = await service.prepareTicketDraft({
+      sessionEmployeeId: 'emp-a',
+      conversationId: 'conv-1',
+      operation: 'CREATE',
+      payload: {
+        ...createDraft,
+        type: 'INCIDENT' as unknown as 'INC',
+        category: 'Rede e Conectividade' as unknown as 'REDE_VPN',
+        priority: 'Média' as unknown as 'MEDIUM',
+        title: 'VPN cai a cada 30 segundos',
+      },
+    });
+    const confirmed = await service.confirmTicketMutation({
+      token: prepared.token,
+      sessionEmployeeId: 'emp-a',
+      expectedConversationId: 'conv-1',
+    });
+    expect(confirmed.ticket.type).toBe('INC');
+    expect(confirmed.ticket.category).toBe('REDE_VPN');
+    expect(confirmed.ticket.priority).toBe('MEDIUM');
+    expect(confirmed.ticket.number).toMatch(/^INC-/);
+  });
+
+  it('rejects confirm when URL conversationId mismatches pending', async () => {
+    const { service } = buildService();
+    const prepared = await service.prepareTicketDraft({
+      sessionEmployeeId: 'emp-a',
+      conversationId: 'conv-1',
+      operation: 'CREATE',
+      payload: createDraft,
+    });
+    await expect(
+      service.confirmTicketMutation({
+        token: prepared.token,
+        sessionEmployeeId: 'emp-a',
+        expectedConversationId: 'conv-other',
+      }),
+    ).rejects.toMatchObject({ reason: 'CONVERSATION_MISMATCH' });
   });
 
   it('updates and reopens with TicketEvent', async () => {
@@ -192,6 +238,7 @@ describe('TicketService confirmation flow', () => {
     const updated = await service.confirmTicketMutation({
       token: upd.token,
       sessionEmployeeId: 'emp-a',
+      expectedConversationId: 'conv-1',
     });
     expect(updated.ticket.title).toContain('atualizado');
     expect(updated.event.kind).toBe('PRIORITY_CHANGED');
@@ -210,6 +257,7 @@ describe('TicketService confirmation flow', () => {
     const reopened = await service.confirmTicketMutation({
       token: reo.token,
       sessionEmployeeId: 'emp-a',
+      expectedConversationId: 'conv-1',
     });
     expect(reopened.ticket.status).toBe('OPEN');
     expect(reopened.ticket.resolvedAt).toBeNull();
@@ -259,13 +307,18 @@ describe('TicketService confirmation flow', () => {
     });
 
     await expect(
-      service.confirmTicketMutation({ token: 'tok-fixed', sessionEmployeeId: 'emp-a' }),
+      service.confirmTicketMutation({
+        token: 'tok-fixed',
+        sessionEmployeeId: 'emp-a',
+        expectedConversationId: 'conv-1',
+      }),
     ).rejects.toThrow('boom');
 
     // token still consumable after rollback
     const retry = await service.confirmTicketMutation({
       token: 'tok-fixed',
       sessionEmployeeId: 'emp-a',
+      expectedConversationId: 'conv-1',
     });
     expect(retry.ticket.number).toBe('INC-0001');
   });

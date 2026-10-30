@@ -12,6 +12,7 @@ import {
   MessageLimitExceededError,
 } from '@/domain/errors';
 import { canAcceptCountableMessage } from '@/domain/message-limit';
+import { normalizeTransferReasonCode } from '@/domain/transfer-reason-normalize';
 import type { AgentBrain, AgentTurnResult } from '@/agent/types';
 import type { ConversationService } from '@/services/conversations';
 
@@ -106,7 +107,7 @@ export function createAgentOrchestrator(deps: OrchestratorDeps) {
           conversationId: input.conversationId,
           sessionEmployeeId: input.employeeId,
           summary: draft.transfer.summary,
-          reasonCode: draft.transfer.reasonCode,
+          reasonCode: normalizeTransferReasonCode(draft.transfer.reasonCode),
         });
 
         await conversations.appendMessage({

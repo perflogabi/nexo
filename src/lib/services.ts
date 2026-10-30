@@ -1,6 +1,6 @@
 import { createAgentBrain } from '@/agent/create-brain';
 import { createAgentOrchestrator } from '@/agent/orchestrator';
-import type { AgentToolContext } from '@/agent/tools/tool-context';
+import { getAgentToolContext } from '@/lib/agent-tool-context';
 import { createAuthService, createPrismaEmployeeDirectory } from '@/services/auth';
 import { createConversationService, createPrismaConversationStore } from '@/services/conversations';
 import { createPrismaHelpCenter } from '@/services/help-center';
@@ -27,33 +27,19 @@ export function getHelpCenterService() {
   return createPrismaHelpCenter(prisma);
 }
 
-let toolContextHolder: AgentToolContext | null = null;
-
-function getToolContext(): AgentToolContext {
-  if (!toolContextHolder) {
-    throw new Error('Agent tool context not bound for this request');
-  }
-  return toolContextHolder;
-}
-
+/** Orquestrador; tools leem o contexto via AsyncLocalStorage (ver runWithAgentToolContext). */
 export function getAgentOrchestrator() {
   const conversations = getConversationService();
-  const tickets = getTicketService();
-  const help = getHelpCenterService();
-  const brain = createAgentBrain(() => getToolContext());
+  const brain = createAgentBrain(() => getAgentToolContext());
+  return createAgentOrchestrator({ conversations, brain });
+}
 
+export function buildAgentToolContext(input: { employeeId: string; conversationId: string }) {
   return {
-    bindContext(ctx: Omit<AgentToolContext, 'tickets' | 'help' | 'conversations'>) {
-      toolContextHolder = {
-        ...ctx,
-        tickets,
-        help,
-        conversations,
-      };
-    },
-    clearContext() {
-      toolContextHolder = null;
-    },
-    orchestrator: createAgentOrchestrator({ conversations, brain }),
+    employeeId: input.employeeId,
+    conversationId: input.conversationId,
+    tickets: getTicketService(),
+    help: getHelpCenterService(),
+    conversations: getConversationService(),
   };
 }
