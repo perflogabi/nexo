@@ -54,5 +54,5 @@ export async function GET() {
       : null,
   }));
 
-  return NextResponse.json({ conversations });
+  return NextResponse.json({ conversations }, { headers: { 'Cache-Control': 'no-store' } });
 }

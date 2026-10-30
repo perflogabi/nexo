@@ -41,12 +41,14 @@ export async function POST(_request: Request, { params }: Params) {
 
   const now = new Date();
   const time = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  // structuredPayload analyst_claim → oculto no /chat do funcionário.
   await prisma.message.create({
     data: {
       conversationId: id,
       authorType: 'SYSTEM',
       authorId: null,
       content: `Assumido por você · ${time}`,
+      structuredPayload: { type: 'analyst_claim' },
       createdAt: now,
     },
   });

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useChatPoll } from '@/lib/chat-poll';
 import {
   claimAnalystConversation,
   closeAnalystConversation,
@@ -94,16 +95,19 @@ export function AnalystConsole({ analystInitials = 'RL' }: Props) {
   }, []);
 
   const loadConversationExtras = useCallback(async (id: string, isClaimed: boolean) => {
-    const [msgResult, tickets] = await Promise.all([
-      fetchAnalystMessages(id),
-      fetchAnalystTicketsPanel(id, isClaimed),
-    ]);
+    // Mensagens primeiro — tickets não podem bloquear o poll do transcript.
+    const msgResult = await fetchAnalystMessages(id);
     setMessages(msgResult.messages);
-    setEmployeeHeader(
-      headerFromConversation(msgResult.conversation, tickets.current?.number ?? null),
-    );
     setWaitingUntil(waitingUntilLabel(msgResult.conversation.updatedAt));
-    setTicketsModel(tickets);
+    let featuredTicket: string | null = null;
+    try {
+      const tickets = await fetchAnalystTicketsPanel(id, isClaimed);
+      setTicketsModel(tickets);
+      featuredTicket = tickets.current?.number ?? null;
+    } catch {
+      /* mantém tickets anteriores */
+    }
+    setEmployeeHeader(headerFromConversation(msgResult.conversation, featuredTicket));
   }, []);
 
   useEffect(() => {
@@ -135,6 +139,31 @@ export function AnalystConsole({ analystInitials = 'RL' }: Props) {
       cancelled = true;
     };
   }, [loadConversationExtras]);
+
+  const pollLive = useCallback(async () => {
+    if (!liveMode || busy) return;
+    const list = await refreshList();
+    if (list.length === 0) return;
+
+    const stillSelected = selectedId ? list.find((row) => row.id === selectedId) : undefined;
+    const newestWaiting = list.find((row) => row.status.tone === 'transfer');
+    // Auto-abre transferência nova se a aba atual é só “Agent atendendo” / resolvida.
+    const shouldFocusWaiting =
+      Boolean(newestWaiting) &&
+      (!stillSelected ||
+        stillSelected.status.label === 'Agent atendendo' ||
+        stillSelected.status.tone === 'resolved');
+
+    const nextId = shouldFocusWaiting ? newestWaiting!.id : (stillSelected?.id ?? list[0]!.id);
+
+    if (nextId !== selectedId) setSelectedId(nextId);
+    const current = list.find((row) => row.id === nextId)!;
+    const isClaimed = isClaimedItem(current);
+    setClaimed(isClaimed);
+    await loadConversationExtras(nextId, isClaimed);
+  }, [busy, liveMode, loadConversationExtras, refreshList, selectedId]);
+
+  useChatPoll(liveMode, pollLive);
 
   async function handleSelectConversation(id: string) {
     setSelectedId(id);

@@ -18,6 +18,8 @@ import type {
 
 type ApiErrorBody = { error?: { code?: string; reason?: string; message?: string } };
 
+const NO_STORE: RequestInit = { cache: 'no-store' };
+
 async function readError(res: Response): Promise<string> {
   try {
     const body = (await res.json()) as ApiErrorBody;
@@ -42,7 +44,7 @@ export type AnalystConversationDetail = {
 };
 
 export async function fetchAnalystConversations(): Promise<ConversationListItemData[]> {
-  const res = await fetch('/api/analyst/conversations', { method: 'GET' });
+  const res = await fetch('/api/analyst/conversations', { method: 'GET', ...NO_STORE });
   if (!res.ok) {
     throw new Error(await readError(res));
   }
@@ -82,6 +84,7 @@ export async function fetchAnalystMessages(
 ): Promise<{ conversation: AnalystConversationDetail; messages: AnalystChatMessage[] }> {
   const res = await fetch(`/api/analyst/conversations/${encodeURIComponent(id)}/messages`, {
     method: 'GET',
+    ...NO_STORE,
   });
   if (!res.ok) {
     throw new Error(await readError(res));
@@ -115,6 +118,7 @@ export async function fetchAnalystTicketsPanel(
 ): Promise<AnalystTicketsPanelModel> {
   const res = await fetch(`/api/analyst/conversations/${encodeURIComponent(id)}/tickets`, {
     method: 'GET',
+    ...NO_STORE,
   });
   if (!res.ok) {
     throw new Error(await readError(res));

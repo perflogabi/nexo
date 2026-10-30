@@ -89,10 +89,13 @@ export async function GET(_request: Request, { params }: Params) {
   });
   const names = await resolveAuthorNames(messages as MessageRow[]);
 
-  return NextResponse.json({
-    conversation,
-    messages: messages.map((m) => serializeMessage(m as MessageRow, names)),
-  });
+  return NextResponse.json(
+    {
+      conversation,
+      messages: messages.map((m) => serializeMessage(m as MessageRow, names)),
+    },
+    { headers: { 'Cache-Control': 'no-store' } },
+  );
 }
 
 export async function POST(request: Request, { params }: Params) {
