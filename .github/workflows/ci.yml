@@ -1,7 +1,6 @@
 # CI — Nexo Assist
-# Scripts: lint | typecheck | test | prisma validate | build
-# Não chama a API Gemini. Não executa migrations (dev/deploy) nem db push.
-# Placeholders DATABASE_URL/DIRECT_URL existem só para validate sintático — sem conexão Neon real.
+# Job ci: lint | typecheck | unit | prisma validate | build (sem Neon real)
+# Job e2e: Postgres efêmero nexo_e2e + integração + Playwright (AGENT_LLM=mock)
 
 name: CI
 
@@ -48,6 +47,7 @@ jobs:
         run: npm test
         env:
           CI: true
+          NEXO_ENV: test
           AGENT_LLM: mock
 
       - name: Prisma validate
@@ -61,8 +61,70 @@ jobs:
         run: npm run build
         env:
           CI: true
+          NEXO_ENV: e2e
           AGENT_LLM: mock
           AUTH_SECRET: ci-build-auth-secret-not-real
-          # Placeholders — build não conecta ao Neon
           DATABASE_URL: postgresql://user:pass@ep-example-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require
           DIRECT_URL: postgresql://user:pass@ep-example.us-east-1.aws.neon.tech/neondb?sslmode=require
+
+  e2e:
+    name: E2E + integration (Postgres efêmero)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: ci
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: nexo_e2e
+          POSTGRES_PASSWORD: nexo_e2e
+          POSTGRES_DB: nexo_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nexo_e2e -d nexo_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      CI: true
+      NEXO_ENV: e2e
+      AGENT_LLM: mock
+      AUTH_SECRET: ci-e2e-auth-secret-not-real
+      # Service hostname no GHA — assert-e2e-database permite host postgres em CI
+      DATABASE_URL: postgresql://nexo_e2e:nexo_e2e@127.0.0.1:5432/nexo_e2e?schema=public
+      DIRECT_URL: postgresql://nexo_e2e:nexo_e2e@127.0.0.1:5432/nexo_e2e?schema=public
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
+      RATE_LIMIT_LOGIN_MAX: '100'
+      RATE_LIMIT_AGENT_MAX: '200'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare e2e database
+        run: npm run db:e2e:prepare
+
+      - name: Integration tests
+        run: npm run test:integration
+
+      - name: Build app
+        run: npm run build
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Playwright E2E
+        run: npm run test:e2e
