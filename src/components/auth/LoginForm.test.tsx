@@ -4,11 +4,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { LoginForm } from './LoginForm';
 
 describe('LoginForm', () => {
-  it('renderiza tipografia Entrar e campos', () => {
+  it('renderiza tipografia Entrar e campos sem demo pré-preenchida', () => {
     render(<LoginForm onSubmit={vi.fn()} />);
     expect(screen.getByRole('heading', { name: 'Entrar' })).toBeInTheDocument();
-    expect(screen.getByText(/Demo:/)).toBeInTheDocument();
-    expect(screen.getByLabelText('E-mail corporativo')).toBeInTheDocument();
+    expect(screen.queryByText(/Demo:/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText('E-mail corporativo')).toHaveValue('');
     expect(screen.getByLabelText('Senha')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Entrar' })).toBeInTheDocument();
   });

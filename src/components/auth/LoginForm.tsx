@@ -14,7 +14,7 @@ type Props = {
 
 /**
  * Formulário Sign In — tipografia, Input, Checkbox e Button do design system.
- * Layout fiel ao asset oficial (fundo branco).
+ * Sem e-mail demo pré-preenchido (campo inicia vazio).
  */
 export function LoginForm({ defaultEmail = '', onSubmit }: Props) {
   const [email, setEmail] = useState(defaultEmail);
@@ -38,23 +38,23 @@ export function LoginForm({ defaultEmail = '', onSubmit }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="font-ui flex w-full flex-col gap-5">
+    <form onSubmit={handleSubmit} className="font-ui flex w-full flex-col gap-4 sm:gap-5">
       <div>
         <Typography
           as="h1"
           font="newsreader"
           size={40}
           weight="medium"
-          className="text-[var(--color-text)]"
+          className="text-[var(--color-text)] max-sm:text-[34px]"
         >
           Entrar
         </Typography>
-        <Typography font="schibsted" size={15.5} className="mt-2.5 text-[var(--color-text-muted)]">
+        <Typography
+          font="schibsted"
+          size={15.5}
+          className="mt-2 text-[var(--color-text-muted)] max-sm:text-[14px] sm:mt-2.5"
+        >
           Use seu e-mail corporativo e a senha da rede Nexo.
-        </Typography>
-        <Typography font="schibsted" size={12.5} className="mt-2 text-[var(--color-text-muted)]">
-          Demo: <span className="text-[var(--color-text)]">ana.souza@nexo.com.br</span> · qualquer
-          senha
         </Typography>
       </div>
 
@@ -65,7 +65,7 @@ export function LoginForm({ defaultEmail = '', onSubmit }: Props) {
         autoComplete="username"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        placeholder="ana.souza@nexo.com.br"
+        placeholder="nome.sobrenome@nexo.com.br"
         leadingIcon={<IconMail />}
       />
 
@@ -102,6 +102,7 @@ export function LoginForm({ defaultEmail = '', onSubmit }: Props) {
         label="Manter conectado neste computador"
         checked={keepSignedIn}
         onChange={(e) => setKeepSignedIn(e.target.checked)}
+        className="gap-2 whitespace-nowrap [&_span]:!text-[13px] [&_span]:!leading-none"
       />
 
       {error ? (

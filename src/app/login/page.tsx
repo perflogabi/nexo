@@ -13,7 +13,6 @@ function LoginInner() {
     <LoginSplitLayout
       form={
         <LoginForm
-          defaultEmail="ana.souza@nexo.com.br"
           onSubmit={async ({ email, password }) => {
             const res = await fetch('/api/auth/login', {
               method: 'POST',

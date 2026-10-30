@@ -60,6 +60,7 @@
 
 | Data | Nota |
 |------|------|
+| 2026-10-30 | Login UX: remove texto Demo e e-mail pré-preenchido; padding mobile + checkbox 1 linha |
 | 2026-10-30 | Docs entrega: README PRD-completo; progress/architecture/implementation-plan atualizados |
 | 2026-10-30 | E2E estável: assets standalone + `loginViaUi` waitForURL; 7 commits da fase E2E |
 | 2026-10-30 | E2E: Postgres `nexo_e2e`, seed-e2e, I1–I5, Playwright P0, UI CLOSED, LLM prod |

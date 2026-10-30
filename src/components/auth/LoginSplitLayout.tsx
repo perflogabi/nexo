@@ -37,12 +37,12 @@ export function LoginSplitLayout({ form }: Props) {
       </div>
 
       <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-white lg:w-[44%]">
-        <div className="flex shrink-0 justify-end px-6 pt-5 sm:px-8 lg:px-8 2xl:px-10 2xl:pt-7">
+        <div className="flex shrink-0 justify-end px-4 pt-4 sm:px-8 sm:pt-5 lg:px-8 2xl:px-10 2xl:pt-7">
           <Typography
             as="p"
             font="schibsted"
             size={12.5}
-            className="text-[var(--color-text-muted)]"
+            className="text-[var(--color-text-muted)] max-sm:text-[12px]"
           >
             Problema para entrar?{' '}
             <a className="font-medium text-[var(--color-primary)] hover:underline" href="tel:4000">
@@ -51,11 +51,14 @@ export function LoginSplitLayout({ form }: Props) {
           </Typography>
         </div>
 
-        <div className="flex min-h-0 flex-1 items-center justify-center px-10 py-6 lg:px-12 2xl:px-14 2xl:py-10">
-          <div className="w-full max-w-[270px] xl:max-w-[320px] 2xl:max-w-[380px]">{form}</div>
+        {/* Mobile: menos padding lateral para o form usar melhor a largura */}
+        <div className="flex min-h-0 flex-1 items-center justify-center px-5 py-4 sm:px-8 sm:py-6 lg:px-12 2xl:px-14 2xl:py-10">
+          <div className="w-full max-w-[320px] sm:max-w-[270px] xl:max-w-[320px] 2xl:max-w-[380px]">
+            {form}
+          </div>
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 px-10 pb-5 pt-1 lg:px-12 2xl:px-14 2xl:pb-8">
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 px-5 pb-4 pt-1 sm:px-8 sm:pb-5 lg:px-12 2xl:px-14 2xl:pb-8">
           <Typography font="schibsted" size={12} className="text-[var(--color-text-muted)]">
             © 2026 Nexo · Service desk de TI
           </Typography>
