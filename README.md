@@ -20,7 +20,10 @@ Abra [http://localhost:3000](http://localhost:3000).
 | `npm run lint`              | ESLint                                                |
 | `npm run typecheck`         | TypeScript `strict`                                   |
 | `npm test`                  | Vitest (unitário)                                     |
-| `npm run test:e2e`          | Playwright (requer app; smoke preparado)              |
+| `npm run test:e2e`          | Playwright (Postgres e2e + mock; ver § E2E)           |
+| `npm run test:integration`  | Integração Prisma no banco `nexo_e2e`                 |
+| `npm run db:e2e:up`         | Sobe Postgres efêmero E2E (`:5433`, db `nexo_e2e`)    |
+| `npm run db:e2e:prepare`    | Guardrail + migrate + seed-e2e                        |
 | `npm run build`             | Build de produção                                     |
 | `npm run storybook`         | Storybook                                             |
 | `npm run db:generate`       | `prisma generate`                                     |
@@ -41,9 +44,23 @@ Banco oficial: **Neon** (PostgreSQL gerenciado). Sem Postgres local obrigatório
 
 Detalhes: [`docs/database.md`](docs/database.md). Schema: `prisma/schema.prisma` (alinhado a `memory-bank/data-model.md`).
 
+### E2E (Playwright + Postgres isolado)
+
+Não use o Neon do `.env` nem o compose principal (`nexo_pg`). Os scripts injetam env e validam host/db/`NEXO_ENV` antes de migrate/testes.
+
+```bash
+npm run db:e2e:up
+npm run db:e2e:prepare
+npm run test:integration
+npm run test:e2e          # build automático se faltar `.next`; AGENT_LLM=mock
+npm run db:e2e:down       # sem -v (não remove volumes do compose principal)
+```
+
+Contas do `seed-e2e`: mesmos e-mails demo + `analista2@nexo.local` (claim concorrente). Fluxos criam conversas próprias.
+
 ### CI
 
-GitHub Actions (`.github/workflows/ci.yml`): `lint` → `typecheck` → `test` → `prisma validate` → `build`. Sem chamada real à API Gemini.
+GitHub Actions: job `ci` (lint/typecheck/unit/validate/build) + job `e2e` (Postgres service `nexo_e2e`, integração, Playwright). Sem Gemini real; sem secrets Neon no job e2e.
 
 ### Husky
 

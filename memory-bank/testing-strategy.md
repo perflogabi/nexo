@@ -172,18 +172,16 @@ Não mockar “campo agentPaused” na UI — usar status da conversa.
 
 ---
 
-## 4. E2E (Playwright)
+## 4. E2E (Playwright) + integração
 
-1. Login EMPLOYEE → chat  
-2. Dúvida VPN → artigo (sem criar chamado)  
-3. Abertura: draft → confirma → ticket criado  
-4. Consulta vencido → transferência → status `WAITING_ANALYST`; agent **não** responde a nova msg  
-5. Login ANALYST → claim atômico → `WITH_ANALYST` → devolver / encerrar  
-6. Privacidade: A não vê ticket de B (`ownerEmployeeId`)  
-7. Role: EMPLOYEE ↛ `/analyst`; ANALYST sem chat como dono indevido  
-8. (Opcional) Duas sessões analyst tentam assumir a mesma conversa → só uma vence  
+**Banco:** somente `nexo_e2e` (compose e2e porta 5433 / CI service). Guardrail bloqueia Neon e db≠`nexo_e2e`.
+**Agent:** `AGENT_LLM=mock` + `NEXO_ENV=e2e|test` (mock rejeitado em produção; sem fallback Gemini→mock).
+**Seed:** `prisma/seed-e2e.ts` (identidades + help); fluxos criam conversas próprias.
+**Workers:** 1 (paralelismo conservador).
 
-Modo `E2E=1` com agent scripted (estabilidade; documentar trade-off no README). Sem Gemini real obrigatório no CI.
+Jornadas P0: E1 login · E2 help · E3 cancel/confirm/persist/consulta · E4 transfer · E5a return · E5b close (+ UI) · E6/E7 authz API.
+Integração: I1–I2 confirm · I3 claim atômico Prisma · I4–I5 authz.
+P1: E8 double-claim browsers.
 
 ---
 

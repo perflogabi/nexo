@@ -29,6 +29,7 @@
 - [x] **Fase 7 (slice)** Rate limit login/agent (429) + redação de segredos / chave Gemini só no server
 - [x] ConfirmationGate end-to-end: `confirmTicketMutation` **fora** das tools LLM; `TicketDraftCard` + `POST .../confirm`; token no `structuredPayload`
 - [x] Contexto das tools do agent via `AsyncLocalStorage` (sem singleton global por request)
+- [x] **Fase 7 E2E** — `docker-compose.e2e.yml` (`nexo_e2e`), guardrail, seed-e2e, integração (confirm/claim), Playwright P0, job CI e2e; indicação CLOSED no `/chat`; mock só fora de produção
 
 ## Verificações confirmadas
 
@@ -63,13 +64,15 @@
 
 ## Próximo marco recomendado
 
-1. **Fase 7** — E2E Playwright → README → deploy Vercel/Neon.
-2. Polir chat: carregar DecisionTrace no GET; streaming SSE opcional.
+1. Validar localmente `db:e2e:*` + `test:integration` + `test:e2e`; acompanhar job CI e2e.
+2. Deploy Vercel/Neon (`NEXO_ENV=production`, `AGENT_LLM=gemini`, sem mock).
+3. Polir chat: DecisionTrace no GET; streaming SSE opcional; E8 P1 (double-claim browsers).
 
 ## Log
 
 | Data | Nota |
 |------|------|
+| 2026-10-30 | E2E: Postgres `nexo_e2e`, seed-e2e, integração I1–I5, Playwright P0, UI CLOSED, LLM sem mock em prod / sem fallback silencioso |
 | 2026-10-29 | Críticos: confirm só via UI; ALS tool context; TicketDraftCard + conversationId no confirm |
 | 2026-10-27 | Planejamento + auditorias documentais |
 | 2026-10-27 | Higiene DecisionTrace / agentPaused |
