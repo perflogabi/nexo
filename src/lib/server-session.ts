@@ -9,10 +9,15 @@ export async function readSession(): Promise<SessionPayload | null> {
 }
 
 export function sessionCookieOptions(maxAgeSec: number) {
+  // Secure só em deploy real (NEXO_ENV=production). E2E/demo usam http://localhost.
+  const secure =
+    process.env.COOKIE_SECURE === '1' ||
+    process.env.COOKIE_SECURE === 'true' ||
+    process.env.NEXO_ENV === 'production';
   return {
     httpOnly: true,
     sameSite: 'lax' as const,
-    secure: process.env.NODE_ENV === 'production',
+    secure,
     path: '/',
     maxAge: maxAgeSec,
   };

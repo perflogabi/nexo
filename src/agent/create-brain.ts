@@ -1,6 +1,7 @@
 /**
- * Preferência: Gemini (@google/genai). Se falhar/timeout/sem resposta → mock.
- * CI / AGENT_LLM=mock: só mock (sem rede).
+ * Cria o brain do agent conforme resolveAgentLlmMode.
+ * - mock: apenas mock (E2E / demo / CI).
+ * - gemini: apenas Gemini — sem fallback silencioso para mock.
  */
 
 import { resolveAgentLlmMode } from '@/agent/llm-mode';
@@ -9,7 +10,7 @@ import type { AgentBrain, AgentReplyDraft, AgentTurnInput } from '@/agent/types'
 import type { AgentToolContext } from '@/agent/tools/tool-context';
 import { safeErrorMessage } from '@/lib/redact-secrets';
 
-/** Tempo para a cadeia de modelos + tools; depois cai no mock. */
+/** Tempo máximo para a cadeia Gemini. */
 const DEFAULT_GEMINI_TIMEOUT_MS = 20_000;
 
 function geminiTimeoutMs(env: Record<string, string | undefined> = process.env): number {
@@ -37,51 +38,50 @@ async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): P
   }
 }
 
+export class AgentLlmUnavailableError extends Error {
+  readonly code = 'AGENT_LLM_UNAVAILABLE';
+  constructor(message: string) {
+    super(message);
+    this.name = 'AgentLlmUnavailableError';
+  }
+}
+
 /**
- * Gemini primeiro; qualquer falha/timeout/resposta vazia → mock no mesmo turno.
+ * Brain Gemini sem fallback para mock.
+ * @deprecated Prefer createAgentBrain — mantido só para testes unitários do caminho Gemini.
  */
-export function createGeminiWithMockFallbackBrain(
+export function createGeminiOnlyBrain(
   getContext: () => AgentToolContext,
-  options?: { timeoutMs?: number; onFallback?: (reason: string) => void },
+  options?: { timeoutMs?: number },
 ): AgentBrain {
-  const mock = createMockAgentBrain(getContext);
   const timeoutMs = options?.timeoutMs ?? geminiTimeoutMs();
 
   return {
     async generateReply(input: AgentTurnInput): Promise<AgentReplyDraft> {
-      // Seleção da lista de chamados: mock determinístico (card + quick replies).
-      if (
-        /\b(?:INC|REQ)-\d+\b/i.test(input.employeeMessage) &&
-        input.employeeMessage.includes('·')
-      ) {
-        return mock.generateReply(input);
-      }
       try {
         const { createGeminiAgentBrain } = await import('@/agent/gemini-brain');
         const gemini = createGeminiAgentBrain(getContext);
         const draft = await withTimeout(gemini.generateReply(input), timeoutMs, 'gemini');
         if (!isUsableReply(draft)) {
-          options?.onFallback?.('empty_reply');
-          return mock.generateReply(input);
+          throw new AgentLlmUnavailableError('Gemini devolveu resposta vazia.');
         }
         return draft;
       } catch (e) {
+        if (e instanceof AgentLlmUnavailableError) throw e;
         const reason = safeErrorMessage(e) || 'gemini_error';
-        options?.onFallback?.(reason);
-        if (process.env.NODE_ENV !== 'test') {
-          console.warn('[agent] Gemini indisponível — usando mock:', reason);
-        }
-        return mock.generateReply(input);
+        throw new AgentLlmUnavailableError(`Gemini indisponível: ${reason}`);
       }
     },
   };
 }
+
+/** @deprecated Use createGeminiOnlyBrain — nome antigo removido do fallback. */
+export const createGeminiWithMockFallbackBrain = createGeminiOnlyBrain;
 
 export function createAgentBrain(getContext: () => AgentToolContext): AgentBrain {
   const mode = resolveAgentLlmMode();
   if (mode === 'mock') {
     return createMockAgentBrain(getContext);
   }
-  // gemini (default com chave): tenta Gemini e cai no mock se não responder
-  return createGeminiWithMockFallbackBrain(getContext);
+  return createGeminiOnlyBrain(getContext);
 }

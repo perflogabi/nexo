@@ -1,4 +1,10 @@
-export { createAgentBrain, createGeminiWithMockFallbackBrain } from '@/agent/create-brain';
+export {
+  createAgentBrain,
+  createGeminiOnlyBrain,
+  createGeminiWithMockFallbackBrain,
+  AgentLlmUnavailableError,
+} from '@/agent/create-brain';
+export { AgentLlmConfigError, resolveNexoRuntimeEnv } from '@/agent/llm-mode';
 
 export { createAgentOrchestrator, type AgentOrchestrator } from '@/agent/orchestrator';
 export { createMockAgentBrain } from '@/agent/mock-brain';

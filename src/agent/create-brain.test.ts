@@ -20,8 +20,8 @@ function ctx(): AgentToolContext {
   };
 }
 
-describe('createGeminiWithMockFallbackBrain', () => {
-  it('usa mock quando Gemini lança erro', async () => {
+describe('createGeminiOnlyBrain', () => {
+  it('propaga erro quando Gemini lança (sem fallback mock)', async () => {
     vi.resetModules();
     vi.doMock('@/agent/gemini-brain', () => ({
       createGeminiAgentBrain: () => ({
@@ -31,26 +31,24 @@ describe('createGeminiWithMockFallbackBrain', () => {
       }),
     }));
 
-    const { createGeminiWithMockFallbackBrain } = await import('@/agent/create-brain');
-    const reasons: string[] = [];
-    const brain = createGeminiWithMockFallbackBrain(() => ctx(), {
-      onFallback: (r) => reasons.push(r),
-    });
+    const { createGeminiOnlyBrain, AgentLlmUnavailableError } =
+      await import('@/agent/create-brain');
+    const brain = createGeminiOnlyBrain(() => ctx());
 
-    const draft = await brain.generateReply({
-      conversationId: 'c1',
-      employeeId: 'emp_1',
-      employeeMessage: 'VPN erro 809',
-      recentMessages: [],
-    });
+    await expect(
+      brain.generateReply({
+        conversationId: 'c1',
+        employeeId: 'emp_1',
+        employeeMessage: 'VPN erro 809',
+        recentMessages: [],
+      }),
+    ).rejects.toBeInstanceOf(AgentLlmUnavailableError);
 
-    expect(draft.content.length).toBeGreaterThan(0);
-    expect(reasons.some((r) => r.includes('gemini_down'))).toBe(true);
     vi.doUnmock('@/agent/gemini-brain');
     vi.resetModules();
   });
 
-  it('usa mock quando Gemini devolve conteúdo vazio', async () => {
+  it('propaga erro quando Gemini devolve conteúdo vazio', async () => {
     vi.resetModules();
     vi.doMock('@/agent/gemini-brain', () => ({
       createGeminiAgentBrain: () => ({
@@ -69,21 +67,19 @@ describe('createGeminiWithMockFallbackBrain', () => {
       }),
     }));
 
-    const { createGeminiWithMockFallbackBrain } = await import('@/agent/create-brain');
-    const reasons: string[] = [];
-    const brain = createGeminiWithMockFallbackBrain(() => ctx(), {
-      onFallback: (r) => reasons.push(r),
-    });
+    const { createGeminiOnlyBrain, AgentLlmUnavailableError } =
+      await import('@/agent/create-brain');
+    const brain = createGeminiOnlyBrain(() => ctx());
 
-    const draft = await brain.generateReply({
-      conversationId: 'c1',
-      employeeId: 'emp_1',
-      employeeMessage: 'status do chamado',
-      recentMessages: [],
-    });
+    await expect(
+      brain.generateReply({
+        conversationId: 'c1',
+        employeeId: 'emp_1',
+        employeeMessage: 'status do chamado',
+        recentMessages: [],
+      }),
+    ).rejects.toBeInstanceOf(AgentLlmUnavailableError);
 
-    expect(draft.content.trim().length).toBeGreaterThan(0);
-    expect(reasons).toContain('empty_reply');
     vi.doUnmock('@/agent/gemini-brain');
     vi.resetModules();
   });
