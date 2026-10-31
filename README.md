@@ -43,14 +43,86 @@ Variáveis: ver [`.env.example`](.env.example). Em produção: `NEXO_ENV=product
 
 ---
 
+## Como testar (manual)
+
+Auth demo: use qualquer senha. Digite o e-mail no login.
+
+### Contas — funcionários (`EMPLOYEE` → `/chat`)
+
+| E-mail                       | Nome           | Departamento |
+| ---------------------------- | -------------- | ------------ |
+| `ana.souza@nexo.com.br`      | Ana Souza      | Financeiro   |
+| `carla.mendes@nexo.com.br`   | Carla Mendes   | Financeiro   |
+| `bruno.tavares@nexo.com.br`  | Bruno Tavares  | Operações    |
+| `diego.ramos@nexo.com.br`    | Diego Ramos    | Comercial    |
+| `elisa.prado@nexo.com.br`    | Elisa Prado    | RH           |
+| `fabio.nunes@nexo.com.br`    | Fábio Nunes    | TI           |
+| `gabriela.rocha@nexo.com.br` | Gabriela Rocha | Marketing    |
+
+### Conta — analista (`ANALYST` → `/analyst`)
+
+| E-mail                | Nome        |
+| --------------------- | ----------- |
+| `analista@nexo.local` | Rafael Lima |
+
+Sugestão: começar com **Ana** (funcionário) e **analista@nexo.local** (console).
+
+### O que exercitar — funcionário
+
+1. Login → `/chat`.
+2. Help sem abrir chamado: ex. _“Erro 809 de VPN no Windows”_ → artigo / orientação; chips `✓` acima da resposta.
+3. Abrir chamado com confirmação: descreva um incidente incompleto → agent pede dados → rascunho (`TicketDraftCard`) → **Confirmar** / **Cancelar** (sem confirm, o ticket não é criado).
+4. Consultar chamados: _“Quais são meus chamados?”_ / selecionar um card da lista.
+5. Transferir: _“Quero falar com um analista”_ → status aguardando; o agent **para** de responder.
+6. Privacidade: logout → login como **Carla** → ela não vê conversas/chamados da Ana.
+7. Perfil: menu → `/profile`.
+
+### O que exercitar — analista
+
+1. Login `analista@nexo.local` → `/analyst` (fila com conversas `WAITING_ANALYST` do seed e as que você transferiu).
+2. **Assumir** um atendimento → `WITH_ANALYST`; responder no composer.
+3. Ver painel de chamados do funcionário da conversa.
+4. **Devolver** ao agent → conversa volta `WITH_AGENT` (funcionário pode continuar no `/chat`).
+5. Ou **Encerrar** → `CLOSED` (no `/chat` do funcionário: indicação de encerrado + composer desabilitado).
+
+### O que exercitar — qualidade / regras
+
+- Chips de transparência (`ChatAgentMeta`) nas respostas do agent.
+- Funcionário **não** acessa `/analyst` (redireciona).
+- Seed: há chamados `OPEN` / `RESOLVED` / `APPROVED` e conversas já em fila ou encerradas para explorar o console sem criar tudo do zero.
+
+### Testes automatizados
+
+```bash
+npm test                     # unitário
+npm run db:e2e:up && npm run db:e2e:prepare
+npm run test:integration     # Postgres nexo_e2e
+npm run test:e2e             # Playwright P0
+```
+
+Detalhes na seção [Qualidade das decisões e testes](#qualidade-das-decisões-e-testes).
+
+---
+
 ## Arquitetura
 
-```
-UI (Next.js App Router + Tailwind)
-  → Route Handlers / middleware (authz por role)
-    → Services (auth, conversations, tickets, help, analyst)
-      → Agent orchestrator (Mastra + tools) + Domain (Anexo A testável)
-        → Prisma → PostgreSQL (Neon em prod; Compose em demo/E2E)
+Separação UI ≠ services ≠ agent ≠ domain ≠ persistência (authz no servidor).
+
+```mermaid
+flowchart TB
+  UI["Interface — Next.js App Router + Tailwind<br/>/login · /chat · /profile · /analyst"]
+  API["Route Handlers + middleware<br/>authz por role"]
+  SVC["Application Services<br/>auth · conversations · tickets · help · analyst"]
+  AGENT["Agent — Mastra + tools<br/>mock ou Gemini"]
+  DOM["Domain — Anexo A testável<br/>SLA · duplicidade · transfer · ConfirmationGate"]
+  DB["Prisma → PostgreSQL<br/>Neon em prod · Compose em demo/E2E"]
+
+  UI --> API --> SVC
+  SVC --> AGENT
+  SVC --> DOM
+  AGENT --> DOM
+  SVC --> DB
+  AGENT --> DB
 ```
 
 | Camada       | Onde                        | Papel                                                               |
